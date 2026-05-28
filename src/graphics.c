@@ -1,6 +1,7 @@
 /** General graphics and window routines. */
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -9,7 +10,10 @@
 #include "graphics.h"
 
 SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
-const char *FONT_FILE = "/usr/share/fonts/truetype/freefont/FreeSans.ttf";
+const char *FONT_FILES[] = {
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    NULL};
 
 SDL_Window *window = NULL;
 SDL_Surface *winSurface = NULL;
@@ -35,6 +39,13 @@ SDL_Window *init_window()
 
 int init_graphics()
 {
+    if (!getenv("XDG_RUNTIME_DIR"))
+    {
+        printf("No display found\n");
+        SDL_Quit();
+        return 1;
+    }
+
     if (TTF_Init() || SDL_Init(SDL_INIT_VIDEO))
         return 1;
 
@@ -45,7 +56,23 @@ int init_graphics()
         return 1;
     }
 
-    font = TTF_OpenFont(FONT_FILE, 24);
+    int i;
+    const char *font_file = NULL;
+    for (i = 0; FONT_FILES[i]; i++)
+        if (access(FONT_FILES[i], F_OK) == 0)
+        {
+            font_file = FONT_FILES[i];
+            break;
+        }
+    if (!font_file)
+    {
+        printf("No font file found.\n");
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+ 
+    font = TTF_OpenFont(font_file, 24);
     if (!font)
     {
         printf("Failed to load font: %s\n", TTF_GetError());

@@ -18,7 +18,7 @@ void poll_events()
     }
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     if (init_screen()) return 1;
 

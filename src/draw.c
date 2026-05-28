@@ -59,7 +59,7 @@ int init_draw()
     return 0;
 }
 
-void draw_chessboard()
+void draw_sdl_chessboard()
 {
     const Uint32 dark_color = SDL_MapRGB(
         winSurface->format, DARK_RGB.r, DARK_RGB.g, DARK_RGB.b);

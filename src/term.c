@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <string.h>
 
-const char *pieces[] = {
+const char *term_pieces[] = {
     " ",
     "♗", "♔", "♘", "♙", "♕", "♖",
     "♝", "♚", "♞", "♟", "♛", "♜"};
@@ -33,15 +33,15 @@ void format_piece(char *buffer, int rank, int file, char invert)
                 piece_index += 6;
         }
 
-        snprintf(buffer, BUFFER_LEN, "\033[7m%s\033[0m", pieces[piece_index]);
+        snprintf(buffer, BUFFER_LEN, "\033[7m%s\033[0m", term_pieces[piece_index]);
     }
     else
     {
-        strncpy(buffer, pieces[piece_index], BUFFER_LEN);
+        strncpy(buffer, term_pieces[piece_index], BUFFER_LEN);
     }
 }
 
-void draw_chessboard()
+void draw_term_chessboard()
 {
     printf("┌───▄▄▄───▄▄▄───▄▄▄───▄▄▄▖\n");
 
@@ -68,10 +68,4 @@ void draw_chessboard()
             printf("▝▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▖\n");
     }
     printf("▝▀▀▀───▀▀▀───▀▀▀───▀▀▀───┘\n");
-}
-
-int main(int argc, char **argv)
-{
-    draw_chessboard();
-    return 0;
 }
