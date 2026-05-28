@@ -51,15 +51,15 @@ void draw_chessboard()
         printf("│");
         for (file = 0; file < 8; file += 2)
         {
-            format_piece(&piece_str_1, rank, file, 0);
-            format_piece(&piece_str_2, rank, file + 1, 1);
+            format_piece(piece_str_1, rank, file, 0);
+            format_piece(piece_str_2, rank, file + 1, 1);
             printf(" %s █%s█", piece_str_1, piece_str_2);
         }
         printf("▌\n▗▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▘\n▐");
         for (file = 0; file < 8; file += 2)
         {
-            format_piece(&piece_str_1, rank + 1, file, 1);
-            format_piece(&piece_str_2, rank + 1, file + 1, 0);
+            format_piece(piece_str_1, rank + 1, file, 1);
+            format_piece(piece_str_2, rank + 1, file + 1, 0);
             printf("█%s█ %s ", piece_str_1, piece_str_2);
         }
         printf("│\n");

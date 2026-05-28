@@ -1,5 +1,6 @@
 CCFLAGS = -ansi `sdl2-config --cflags`
-LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
+#LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
 
-chess: chess.c
-	$(CC) $(CCFLAGS) -o chess chess.c $(LDFLAGS)
+bin/chess: chess.c
+	mkdir -p bin
+	$(CC) $(CCFLAGS) -o bin/chess chess.c $(LDFLAGS)
