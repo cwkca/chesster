@@ -41,8 +41,8 @@ int init_graphics()
 {
     if (!getenv("XDG_RUNTIME_DIR"))
     {
-        printf("No display found\n");
-        SDL_Quit();
+        printf("No desktop environment found\n");
+        /* Todo: set to terminal mode */
         return 1;
     }
 
