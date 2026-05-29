@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -33,7 +34,7 @@ int load_pieces(char color) {
     const char *piece;
 
     for (piece = pieces; *piece; piece++) {
-        snprintf(piece_path, PATH_MAX, "%s/%c%c.svg", ASSET_PATH, *piece, color);
+        sprintf(piece_path, "%s/%c%c.svg", ASSET_PATH, *piece, color);
         SDL_Surface *piece_img = IMG_Load(piece_path);
         if (!piece_img)
         {

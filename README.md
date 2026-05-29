@@ -1,4 +1,4 @@
-# chesster
+# Chesster
 A portable chess program
 
 ## Installing dependencies

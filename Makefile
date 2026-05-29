@@ -1,6 +1,6 @@
 .PHONY: run
 
-CC=gcc
+CC=clang
 CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
 LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
 OBJS = obj/draw.o obj/game.o obj/graphics.o obj/main.o obj/term.o

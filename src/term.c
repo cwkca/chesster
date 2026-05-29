@@ -33,7 +33,7 @@ void format_piece(char *buffer, int rank, int file, char invert)
                 piece_index += 6;
         }
 
-        snprintf(buffer, BUFFER_LEN, "\033[7m%s\033[0m", term_pieces[piece_index]);
+        sprintf(buffer, "\033[7m%s\033[0m", term_pieces[piece_index]);
     }
     else
     {
