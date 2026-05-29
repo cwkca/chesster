@@ -20,7 +20,7 @@ void poll_events()
 
 int main(int argc, char **argv)
 {
-    if (init_screen()) return 1;
+    if (init_game()) return 1;
 
     poll_events();
 

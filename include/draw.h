@@ -4,8 +4,8 @@
 
 int init_draw();
 
-void draw_sdl_chessboard();
-int draw_pieces(char *board);
+int draw_board();
+int draw_pieces();
 
 void cleanup_draw();
 

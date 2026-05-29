@@ -9,7 +9,16 @@
 #include <SDL_ttf.h>
 
 #include "graphics.h"
+#include "term.h"
+#include "draw.h"
 #include "game.h"
+
+typedef enum {
+    SDL = 1,
+    TERM = 2
+} DisplayMode;
+
+DisplayMode display_mode = NONE;
 
 const char *ASSET_PATH = "assets";
 #define PATH_MAX 256
@@ -20,28 +29,23 @@ const SDL_Color DARK_RGB = {100, 60, 30};
 
 int square_size;
 
-SDL_Surface *piece_imgs[2][20];
+SDL_Surface *piece_imgs[16];
 
-SDL_Surface **get_piece_img(char piece, char color) {
-    assert(islower(piece) && islower(color));
-    int color_index = color == 'b' ? 1 : 0;
-    return &(piece_imgs[color_index][piece - 'a']);
-}
-
-int load_pieces(char color) {
+int load_pieces(PieceColor color) {
+    Piece piece;
     char piece_path[PATH_MAX];
-    char piece_code[3];
-    const char *piece;
+    char color_code = color == WHITE ? 'w' : 'b';
 
-    for (piece = pieces; *piece; piece++) {
-        sprintf(piece_path, "%s/%c%c.svg", ASSET_PATH, *piece, color);
+    for (piece = KING; piece <= PAWN; piece++) {
+        sprintf(piece_path, "%s/%c%c.svg",
+            ASSET_PATH, PIECE_NAMES[piece], color_code);
         SDL_Surface *piece_img = IMG_Load(piece_path);
         if (!piece_img)
         {
             printf("Failed to load piece %s: %s\n", piece_path, IMG_GetError());
             return 1;
         }
-        *get_piece_img(*piece, color) = piece_img;
+        piece_imgs[color | piece] = piece_img;
     }
 
     return 0;
@@ -49,13 +53,17 @@ int load_pieces(char color) {
 
 int init_draw()
 {
-    if (init_graphics()) return 1;
+    if (init_graphics() == 0) {
+        display_mode = SDL;
     
-    assert(CHESSBOARD_RECT.h == CHESSBOARD_RECT.w);
-    assert(CHESSBOARD_RECT.h % 8 == 0);
-    square_size = CHESSBOARD_RECT.h / 8;
+        assert(CHESSBOARD_RECT.h == CHESSBOARD_RECT.w);
+        assert(CHESSBOARD_RECT.h % 8 == 0);
+        square_size = CHESSBOARD_RECT.h / 8;
 
-    if (load_pieces('b') || load_pieces('w')) return 1;
+        if (load_pieces(WHITE) || load_pieces(BLACK)) return 1;
+    } else {
+        display_mode = TERM;
+    }
 
     return 0;
 }
@@ -87,7 +95,14 @@ void draw_sdl_chessboard()
     SDL_UpdateWindowSurface(window);
 }
 
-int place_piece(char piece, char color, int file, int rank)
+int draw_board() {
+    if (!display_mode) return 1;
+    if (display_mode == SDL) draw_sdl_chessboard();
+    else draw_term_chessboard();
+    return 0;
+}
+
+int place_piece(ColoredPiece piece, int file, int rank)
 {
     SDL_Rect pieceRect = {
         CHESSBOARD_RECT.x + file * square_size,
@@ -96,34 +111,35 @@ int place_piece(char piece, char color, int file, int rank)
         square_size,
     };
 
-    SDL_BlitScaled(*get_piece_img(piece, color), NULL, winSurface, &pieceRect);
+    SDL_BlitScaled(piece_imgs[piece], NULL, winSurface, &pieceRect);
     SDL_UpdateWindowSurface(window);
 
     return 0;
 }
 
-int draw_pieces(char *board) {
+int draw_pieces() {
+    if (display_mode != SDL) return 0;
+
     int rank, file;
     for (rank = 0; rank < 8; rank++)
         for (file = 0; file < 8; file++) {
-            char piece = board[rank * 8 + file];
-            if (piece == '.') continue;
-            char color = islower(piece) ? 'b' : 'w';
-            if (place_piece(tolower(piece), color, file, rank)) return 1;
+            ColoredPiece piece = board[rank][file];
+            if (piece) place_piece(piece, file, rank);
         }
+
     return 0;
 }
 
-void cleanup_pieces(char color) {
-    const char *piece;
-    for (piece = pieces; *piece; piece++)
-        SDL_FreeSurface(*get_piece_img(*piece, color));
+void cleanup_pieces() {
+    Piece piece;
+    for (piece = KING; piece <= PAWN; piece++) {
+        SDL_FreeSurface(piece_imgs[WHITE | piece]);
+        SDL_FreeSurface(piece_imgs[BLACK | piece]);
+    }
 }
 
 void cleanup_draw() {
-    cleanup_pieces('b');
-    cleanup_pieces('w');
-
+    cleanup_pieces();
     SDL_DestroyWindow(window);
     SDL_Quit();
 }

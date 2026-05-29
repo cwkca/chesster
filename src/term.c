@@ -2,65 +2,42 @@
 #include <assert.h>
 #include <string.h>
 
-const char *term_pieces[] = {
-    " ",
-    "♗", "♔", "♘", "♙", "♕", "♖",
-    "♝", "♚", "♞", "♟", "♛", "♜"};
+#include "game.h"
 
-const int board[8][8] = {
-    12, 9, 7, 11, 8, 7, 9, 12,
-    10, 10, 10, 10, 10, 10, 10, 10,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    4, 4, 4, 4, 4, 4, 4, 4,
-    6, 3, 1, 5, 2, 1, 3, 6};
+const char *TERM_PIECES[] = {
+    " ", "♔", "♕", "♖", "♗", "♘", "♙", " ",
+    " ", "♚", "♛", "♜", "♝", "♞", "♟", " "};
 
 #define BUFFER_LEN 20
-char piece_str_1[BUFFER_LEN], piece_str_2[BUFFER_LEN];
+char inverted_piece[BUFFER_LEN];
 
-void format_piece(char *buffer, int rank, int file, char invert)
+void invert_piece(int piece_index)
 {
-    int piece_index = board[rank][file];
-    if (invert)
-    {
-        if (piece_index)
-        {
-            if (piece_index > 6)
-                piece_index -= 6;
-            else
-                piece_index += 6;
-        }
-
-        sprintf(buffer, "\033[7m%s\033[0m", term_pieces[piece_index]);
-    }
-    else
-    {
-        strncpy(buffer, term_pieces[piece_index], BUFFER_LEN);
-    }
+    piece_index ^= COLOR_MASK;
+    sprintf(inverted_piece, "\033[7m%s\033[0m", TERM_PIECES[piece_index]);
 }
 
 void draw_term_chessboard()
 {
     printf("┌───▄▄▄───▄▄▄───▄▄▄───▄▄▄▖\n");
 
-    int rank, file;
+    const char *plain_piece;
+    int rank, file, piece_index;
     for (rank = 0; rank < 8; rank += 2)
     {
         printf("│");
         for (file = 0; file < 8; file += 2)
         {
-            format_piece(piece_str_1, rank, file, 0);
-            format_piece(piece_str_2, rank, file + 1, 1);
-            printf(" %s █%s█", piece_str_1, piece_str_2);
+            plain_piece = TERM_PIECES[board[rank][file]];
+            invert_piece(board[rank][file + 1]);
+            printf(" %s █%s█", plain_piece, inverted_piece);
         }
         printf("▌\n▗▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▘\n▐");
         for (file = 0; file < 8; file += 2)
         {
-            format_piece(piece_str_1, rank + 1, file, 1);
-            format_piece(piece_str_2, rank + 1, file + 1, 0);
-            printf("█%s█ %s ", piece_str_1, piece_str_2);
+            invert_piece(board[rank + 1][file]);
+            plain_piece = TERM_PIECES[board[rank + 1][file + 1]];
+            printf("█%s█ %s ", inverted_piece, plain_piece);
         }
         printf("│\n");
 
