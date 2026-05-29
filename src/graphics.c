@@ -13,6 +13,7 @@ SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
 const char *FONT_FILES[] = {
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/System/Library/Fonts/SFNS.ttf",
     NULL};
 
 SDL_Window *window = NULL;
@@ -39,13 +40,6 @@ SDL_Window *init_window()
 
 int init_graphics()
 {
-    if (!getenv("XDG_RUNTIME_DIR"))
-    {
-        printf("No desktop environment found\n");
-        /* Todo: set to terminal mode */
-        return 1;
-    }
-
     if (TTF_Init() || SDL_Init(SDL_INIT_VIDEO))
         return 1;
 
@@ -71,7 +65,7 @@ int init_graphics()
         SDL_Quit();
         return 1;
     }
- 
+
     font = TTF_OpenFont(font_file, 24);
     if (!font)
     {
