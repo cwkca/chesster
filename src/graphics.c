@@ -38,9 +38,43 @@ SDL_Window *init_window()
     return window;
 }
 
+int init_fonts()
+{
+    /* Todo: emscripten
+     if (TTF_Init()) return 1;
+
+     int i;
+     const char *font_file = NULL;
+     for (i = 0; FONT_FILES[i]; i++)
+         if (access(FONT_FILES[i], F_OK) == 0)
+         {
+             font_file = FONT_FILES[i];
+             break;
+         }
+     if (!font_file)
+     {
+         printf("No font file found.\n");
+         SDL_DestroyWindow(window);
+         SDL_Quit();
+         return 1;
+     }
+
+     font = TTF_OpenFont(font_file, 24);
+     if (!font)
+     {
+         printf("Failed to load font: %s\n", TTF_GetError());
+         SDL_DestroyWindow(window);
+         SDL_Quit();
+         return 1;
+     }
+     */
+
+    return 0;
+}
+
 int init_graphics()
 {
-    if (TTF_Init() || SDL_Init(SDL_INIT_VIDEO))
+    if (SDL_Init(SDL_INIT_VIDEO))
         return 1;
 
     window = init_window();
@@ -50,30 +84,8 @@ int init_graphics()
         return 1;
     }
 
-    int i;
-    const char *font_file = NULL;
-    for (i = 0; FONT_FILES[i]; i++)
-        if (access(FONT_FILES[i], F_OK) == 0)
-        {
-            font_file = FONT_FILES[i];
-            break;
-        }
-    if (!font_file)
-    {
-        printf("No font file found.\n");
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+    if (init_fonts())
         return 1;
-    }
-
-    font = TTF_OpenFont(font_file, 24);
-    if (!font)
-    {
-        printf("Failed to load font: %s\n", TTF_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
 
     return 0;
 }

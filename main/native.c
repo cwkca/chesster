@@ -1,6 +1,5 @@
-/** Entry point and control code. */
+/** Native entry point and event loop. */
 
-#include <stdio.h>
 #include <SDL.h>
 
 #include "draw.h"

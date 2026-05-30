@@ -1,18 +1,54 @@
-.PHONY: run
+.PHONY: run-native run-web web
+
+CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
+
+
+#
+# Native
+#
 
 CC=clang
-CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
 LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
-OBJS = obj/draw.o obj/game.o obj/graphics.o obj/main.o obj/term.o
+NATIVE_OBJS = $(shell ls src | sed 's|\(.*\)\.c|native/obj/\1.o|g') native/obj/main.o
 
-run: bin/chess
-	bin/chess
+native/chess: $(NATIVE_OBJS)
+	$(CC) -o native/chess $(NATIVE_OBJS) $(LDFLAGS)
 
-bin/chess: $(OBJS)
-	mkdir -p bin; $(CC) -o bin/chess $(OBJS) $(LDFLAGS)
+native/obj/%.o: src/%.c include/%.h
+	mkdir -p native/obj; $(CC) $(CFLAGS) -c $< -o $@
 
-obj/%.o: src/%.c include/%.h
-	mkdir -p obj; $(CC) $(CFLAGS) -c $< -o $@
+native/obj/main.o: main/native.c
+	mkdir -p native/obj; $(CC) $(CFLAGS) -c $< -o $@
+
+run-native: native/chess
+	native/chess
+
+
+#
+# Web (via emscripten)
+#
+
+WEB_OBJS = $(shell ls src | sed 's|\(.*\)\.c|web/obj/\1.o|g') web/obj/main.o
+
+web: web/chess.js
+
+web/chess.js: $(WEB_OBJS)
+	emcc -s USE_SDL=2 -o web/chess.js $(WEB_OBJS) --preload-file assets
+
+web/obj/%.o: src/%.c include/%.h
+	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
+
+web/obj/main.o: main/web.c
+	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
+
+run-web: web/chess.js
+	echo "\nServing at http://localhost:8000/chess.html\n"
+	python3 -m http.server
+
+
+#
+# Util
+#
 
 clean:
-	rm -rf obj bin
+	rm -rf native web
