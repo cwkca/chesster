@@ -1,50 +1,30 @@
 /** Game logic. */
 
-#include <stddef.h>
+#include <assert.h>
+#include <stdio.h>
+#include <ctype.h>
 
+#include "chess.h"
 #include "game.h"
 #include "draw.h"
 
-const char *PIECE_NAMES = " kqrbnp ";
-const char *COLORED_PIECE_NAMES = " KQRBNP  kqrbnp ";
+const char *PIECE_NAMES = "_kqrbnp_";
+const char *COLORED_PIECE_NAMES = "_kqrbnp__KQRBNP_";
 
-ColoredPiece board[8][8];
+#define LUT_SIZE 50
+ColoredPiece PIECE_LOOKUP[LUT_SIZE];
+
+const char *STARTING_FEN = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr";
 
 DrawAdapter *draw = NULL;
+ColoredPiece board[8][8];
 
-// Todo: FEN
-void setup_board()
-{
-    board[0][0] = BLACK | ROOK;
-    board[0][1] = BLACK | KNIGHT;
-    board[0][2] = BLACK | BISHOP;
-    board[0][3] = BLACK | QUEEN;
-    board[0][4] = BLACK | KING;
-    board[0][5] = BLACK | BISHOP;
-    board[0][6] = BLACK | KNIGHT;
-    board[0][7] = BLACK | ROOK;
-
-    int file;
-    for (file = 0; file < 8; file++)
-        board[1][file] = BLACK | PAWN;
-
-    int rank;
-    for (rank = 2; rank < 6; rank++)
-        for (file = 0; file < 8; file++)
-            board[rank][file] = NONE;
-
-    for (file = 0; file < 8; file++)
-        board[6][file] = WHITE | PAWN;
-
-    board[7][0] = WHITE | ROOK;
-    board[7][1] = WHITE | KNIGHT;
-    board[7][2] = WHITE | BISHOP;
-    board[7][3] = WHITE | QUEEN;
-    board[7][4] = WHITE | KING;
-    board[7][5] = WHITE | BISHOP;
-    board[7][6] = WHITE | KNIGHT;
-    board[7][7] = WHITE | ROOK;
-}
+/* Private function prototypes */
+void init_piece_lookup();
+ColoredPiece get_piece_named(char piece);
+int safe_get_lut_index(char piece);
+int load_fen(const char *fen);
+void report_fen_error(const char *fen, int index);
 
 int init_game()
 {
@@ -52,11 +32,15 @@ int init_game()
     if (!draw)
         return 1;
 
-    setup_board();
+    init_piece_lookup();
+    return 0;
+}
 
+int start_game()
+{
+    assert(load_fen(STARTING_FEN) == 0);
     if (draw->draw_board() || draw->draw_pieces())
         return 1;
-
     return 0;
 }
 
@@ -64,4 +48,82 @@ void cleanup_game()
 {
     if (draw)
         draw->cleanup();
+}
+
+/*
+ * Private functions
+ */
+
+void init_piece_lookup()
+{
+    int index = 0;
+    const char *piece;
+    for (piece = COLORED_PIECE_NAMES; *piece; piece++, index++)
+        PIECE_LOOKUP[safe_get_lut_index(*piece)] = index;
+}
+
+ColoredPiece get_piece_named(char piece)
+{
+    return PIECE_LOOKUP[safe_get_lut_index(piece)];
+}
+
+int safe_get_lut_index(char piece)
+{
+    int index = piece - 'A';
+    assert(index >= 0 && index < LUT_SIZE);
+    return index;
+}
+
+int load_fen(const char *fen)
+{
+    const char *c;
+    int rank, file, skip, i;
+
+    rank = file = 0;
+    for (c = fen; *c; c++)
+    {
+        if (isdigit(*c))
+        {
+            skip = *c - '0';
+            for (i = 0; i < skip; i++)
+                board[rank][file++] = NONE;
+            continue;
+        }
+
+        if (*c == '/')
+        {
+            if (file == 8)
+            {
+                file = 0;
+                rank++;
+                continue;
+            }
+            else
+            {
+                report_fen_error(fen, c - fen);
+                return 1;
+            }
+        }
+        else if (file == 8)
+        {
+            report_fen_error(fen, c - fen);
+            return 1;
+        }
+
+        board[rank][file++] = get_piece_named(*c);
+    }
+
+    if (file != 8 || ++rank != 8)
+    {
+        printf("Incomplete FEN string:\n    %s\n", fen);
+        return 1;
+    }
+
+    return 0;
+}
+
+void report_fen_error(const char *fen, int index)
+{
+    printf("Error loading FEN string:\n    %s\n", fen);
+    printf("%*s^\n", (int)(4 + index), "");
 }

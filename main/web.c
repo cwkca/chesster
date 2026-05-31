@@ -17,7 +17,7 @@ void main_loop()
 
 int main(int argc, char **argv)
 {
-    if (init_game())
+    if (init_game() || start_game())
         return 1;
 
     // 0 fps means use requestAnimationFrame (recommended)
