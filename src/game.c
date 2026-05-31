@@ -1,13 +1,20 @@
 /** Game logic. */
 
+#include <stddef.h>
+
 #include "game.h"
 #include "draw.h"
 
 const char *PIECE_NAMES = " kqrbnp ";
+const char *COLORED_PIECE_NAMES = " KQRBNP  kqrbnp ";
 
 ColoredPiece board[8][8];
 
-void setup_board() {
+DrawAdapter *draw = NULL;
+
+// Todo: FEN
+void setup_board()
+{
     board[0][0] = BLACK | ROOK;
     board[0][1] = BLACK | KNIGHT;
     board[0][2] = BLACK | BISHOP;
@@ -40,13 +47,21 @@ void setup_board() {
 }
 
 int init_game()
-{ 
-    if (init_draw()) return 1;
+{
+    draw = init_draw();
+    if (!draw)
+        return 1;
 
     setup_board();
-    draw_board();
-    if (draw_pieces())
+
+    if (draw->draw_board() || draw->draw_pieces())
         return 1;
 
     return 0;
+}
+
+void cleanup_game()
+{
+    if (draw)
+        draw->cleanup();
 }

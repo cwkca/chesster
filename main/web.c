@@ -2,7 +2,6 @@
 
 #include <SDL.h>
 
-#include "draw.h"
 #include "game.h"
 
 void main_loop()
@@ -24,6 +23,6 @@ int main(int argc, char **argv)
     // 0 fps means use requestAnimationFrame (recommended)
     emscripten_set_main_loop(main_loop, 0, 1);
 
-    cleanup_draw();
+    cleanup_game();
     return 0;
 }

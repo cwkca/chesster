@@ -1,13 +1,12 @@
-/** General graphics and window routines. */
+/** General SDL drawing and window routines. */
 
 #include <stdio.h>
 #include <unistd.h>
 
 #include <SDL.h>
-#include <SDL_image.h>
 #include <SDL_ttf.h>
 
-#include "graphics.h"
+#include "sdl_util.h"
 
 SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
 const char *FONT_FILES[] = {
@@ -19,6 +18,52 @@ const char *FONT_FILES[] = {
 SDL_Window *window = NULL;
 SDL_Surface *winSurface = NULL;
 TTF_Font *font = NULL;
+
+/* Private function prototypes */
+SDL_Window *create_window(const char *title, SDL_Rect rect, Uint32 flags);
+SDL_Window *init_window();
+int init_fonts();
+
+int init_sdl()
+{
+    if (SDL_Init(SDL_INIT_VIDEO))
+        return 1;
+
+    window = init_window();
+    if (!window)
+    {
+        SDL_Quit();
+        return 1;
+    }
+
+    if (init_fonts())
+        return 1;
+
+    return 0;
+}
+
+void draw_rect(SDL_Rect rect, Uint8 r, Uint8 g, Uint8 b)
+{
+    Uint32 color = SDL_MapRGB(winSurface->format, r, g, b);
+    SDL_FillRect(winSurface, &rect, color);
+    SDL_UpdateWindowSurface(window);
+}
+
+void draw_text(const char *text, TTF_Font *font)
+{
+    SDL_Color textColor = {255, 255, 255, 255};
+    SDL_Rect textRect = {20, 20, 0, 0};
+
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, textColor);
+    SDL_BlitSurface(textSurface, NULL, winSurface, &textRect);
+    SDL_FreeSurface(textSurface);
+
+    SDL_UpdateWindowSurface(window);
+}
+
+/*
+ * Private functions
+ */
 
 SDL_Window *create_window(const char *title, SDL_Rect rect, Uint32 flags)
 {
@@ -70,41 +115,4 @@ int init_fonts()
      */
 
     return 0;
-}
-
-int init_graphics()
-{
-    if (SDL_Init(SDL_INIT_VIDEO))
-        return 1;
-
-    window = init_window();
-    if (!window)
-    {
-        SDL_Quit();
-        return 1;
-    }
-
-    if (init_fonts())
-        return 1;
-
-    return 0;
-}
-
-void draw_rect(SDL_Rect rect, Uint8 r, Uint8 g, Uint8 b)
-{
-    Uint32 color = SDL_MapRGB(winSurface->format, r, g, b);
-    SDL_FillRect(winSurface, &rect, color);
-    SDL_UpdateWindowSurface(window);
-}
-
-void draw_text(const char *text, TTF_Font *font)
-{
-    SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Rect textRect = {20, 20, 0, 0};
-
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, textColor);
-    SDL_BlitSurface(textSurface, NULL, winSurface, &textRect);
-    SDL_FreeSurface(textSurface);
-
-    SDL_UpdateWindowSurface(window);
 }

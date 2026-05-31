@@ -2,7 +2,6 @@
 
 #include <SDL.h>
 
-#include "draw.h"
 #include "game.h"
 
 void poll_events()
@@ -27,6 +26,6 @@ int main(int argc, char **argv)
 
     poll_events();
 
-    cleanup_draw();
+    cleanup_game();
     return 0;
 }

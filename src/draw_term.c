@@ -17,7 +17,7 @@ void invert_piece(int piece_index)
     sprintf(inverted_piece, "\033[7m%s\033[0m", TERM_PIECES[piece_index]);
 }
 
-void draw_term_chessboard()
+int draw_board_term()
 {
     printf("┌───▄▄▄───▄▄▄───▄▄▄───▄▄▄▖\n");
 
@@ -45,4 +45,13 @@ void draw_term_chessboard()
             printf("▝▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▖\n");
     }
     printf("▝▀▀▀───▀▀▀───▀▀▀───▀▀▀───┘\n");
+
+    return 0;
 }
+
+int draw_pieces_term()
+{
+    return 0;
+}
+
+void cleanup_term() {}

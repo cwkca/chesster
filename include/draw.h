@@ -1,12 +1,13 @@
-
 #ifndef DRAW_H
 #define DRAW_H
 
-int init_draw();
+typedef struct
+{
+    int (*draw_board)();
+    int (*draw_pieces)();
+    void (*cleanup)();
+} DrawAdapter;
 
-int draw_board();
-int draw_pieces();
-
-void cleanup_draw();
+DrawAdapter *init_draw();
 
 #endif /* DRAW_H */
