@@ -28,12 +28,14 @@ run-native: native/chess
 # Web (via emscripten)
 #
 
+EMFLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
 WEB_OBJS = $(shell ls src | sed 's|\(.*\)\.c|web/obj/\1.o|g') web/obj/main.o
 
-web: web/chess.js
+web: web/chess.js static $(shell ls static/*)
+	cp static/* web
 
 web/chess.js: $(WEB_OBJS)
-	emcc -s USE_SDL=2 -o web/chess.js $(WEB_OBJS) --preload-file assets
+	emcc -o web/chess.js $(WEB_OBJS) $(EMFLAGS) --preload-file pieces
 
 web/obj/%.o: src/%.c include/%.h
 	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
@@ -41,9 +43,9 @@ web/obj/%.o: src/%.c include/%.h
 web/obj/main.o: main/web.c
 	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
 
-run-web: web/chess.js
+run-web: web
 	echo "\nServing at http://localhost:8000/chess.html\n"
-	python3 -m http.server
+	python3 -m http.server --directory web
 
 
 #

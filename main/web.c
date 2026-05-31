@@ -1,6 +1,7 @@
 /** Emscripten entry point and event loop. */
 
 #include <SDL.h>
+#include <emscripten.h>
 
 #include "game.h"
 
@@ -10,7 +11,6 @@ void main_loop()
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_QUIT)
-            // wasm-ld: error: function signature mismatch (return type) :-(
             emscripten_cancel_main_loop();
     }
 }

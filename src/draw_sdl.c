@@ -13,7 +13,7 @@
 #include "game.h"
 #include "chess.h"
 
-const char *ASSET_PATH = "assets";
+const char *PIECE_IMG_PATH = "pieces/png60";
 #define PATH_MAX 256
 
 const SDL_Rect CHESSBOARD_RECT = {160, 60, 480, 480};
@@ -106,8 +106,8 @@ int load_pieces(PieceColor color)
 
     for (piece = KING; piece <= PAWN; piece++)
     {
-        sprintf(piece_path, "%s/%c%c.svg",
-                ASSET_PATH, PIECE_NAMES[piece], color_code);
+        sprintf(piece_path, "%s/%c%c.png",
+                PIECE_IMG_PATH, PIECE_NAMES[piece], color_code);
         SDL_Surface *piece_img = IMG_Load(piece_path);
         if (!piece_img)
         {
@@ -125,11 +125,12 @@ int place_piece(ColoredPiece piece, int file, int rank)
     SDL_Rect pieceRect = {
         CHESSBOARD_RECT.x + file * square_size,
         CHESSBOARD_RECT.y + rank * square_size,
-        square_size,
-        square_size,
+        /* Width and height ignored */
+        0,
+        0,
     };
 
-    SDL_BlitScaled(piece_imgs[piece], NULL, winSurface, &pieceRect);
+    SDL_BlitSurface(piece_imgs[piece], NULL, winSurface, &pieceRect);
     SDL_UpdateWindowSurface(window);
 
     return 0;
