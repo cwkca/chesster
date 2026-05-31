@@ -56,22 +56,31 @@ void cleanup_game()
 
 void init_piece_lookup()
 {
-    int index = 0;
-    const char *piece;
-    for (piece = COLORED_PIECE_NAMES; *piece; piece++, index++)
-        PIECE_LOOKUP[safe_get_lut_index(*piece)] = index;
+    int lut_index;
+    for (lut_index = 0; lut_index < LUT_SIZE; lut_index++)
+        PIECE_LOOKUP[lut_index] = NONE;
+
+    int piece_index;
+    for (piece_index = 0; piece_index < 16; piece_index++)
+    {
+        lut_index = safe_get_lut_index(COLORED_PIECE_NAMES[piece_index]);
+        assert(lut_index);
+        PIECE_LOOKUP[lut_index] = piece_index;
+    }
 }
 
 ColoredPiece get_piece_named(char piece)
 {
-    return PIECE_LOOKUP[safe_get_lut_index(piece)];
+    int lut_index = safe_get_lut_index(piece);
+    return lut_index ? PIECE_LOOKUP[lut_index] : NONE;
 }
 
 int safe_get_lut_index(char piece)
 {
     int index = piece - 'A';
-    assert(index >= 0 && index < LUT_SIZE);
-    return index;
+    return (index < 0 || index >= LUT_SIZE)
+               ? 0
+               : index;
 }
 
 int load_fen(const char *fen)
@@ -104,18 +113,26 @@ int load_fen(const char *fen)
                 return 1;
             }
         }
-        else if (file == 8)
+
+        if (file >= 8)
         {
             report_fen_error(fen, c - fen);
             return 1;
         }
 
-        board[rank][file++] = get_piece_named(*c);
+        ColoredPiece piece = get_piece_named(*c);
+        if (piece)
+            board[rank][file++] = piece;
+        else
+        {
+            report_fen_error(fen, c - fen);
+            return 1;
+        }
     }
 
     if (file != 8 || ++rank != 8)
     {
-        printf("Incomplete FEN string:\n    %s\n", fen);
+        printf("Malformed FEN string:\n    %s\n", fen);
         return 1;
     }
 
