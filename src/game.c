@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "chess.h"
 #include "game.h"
 #include "draw.h"
 

@@ -1,7 +1,8 @@
-.PHONY: run-native run-web web
+.PHONY: native web run-native run-web
+.DEFAULT_GOAL := native
 
 CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
-
+BUILD_PATH=build
 
 #
 # Native
@@ -9,19 +10,26 @@ CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
 
 CC=clang
 LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
-NATIVE_OBJS = $(shell ls src | sed 's|\(.*\)\.c|native/obj/\1.o|g') native/obj/main.o
+NATIVE_BUILD=$(BUILD_PATH)/native
+NATIVE_OBJ_PATH=$(NATIVE_BUILD)/obj
+NATIVE_OBJS = $(shell ls src | sed 's|\(.*\)\.c|$(NATIVE_OBJ_PATH)/\1.o|g') $(NATIVE_OBJ_PATH)/main.o
 
-native/chess: $(NATIVE_OBJS)
-	$(CC) -o native/chess $(NATIVE_OBJS) $(LDFLAGS)
+native: $(NATIVE_BUILD)/chess
 
-native/obj/%.o: src/%.c include/%.h
-	mkdir -p native/obj; $(CC) $(CFLAGS) -c $< -o $@
+$(NATIVE_OBJ_PATH):
+	mkdir -p $(NATIVE_OBJ_PATH)
 
-native/obj/main.o: main/native.c
-	mkdir -p native/obj; $(CC) $(CFLAGS) -c $< -o $@
+$(NATIVE_BUILD)/chess: $(NATIVE_OBJS)
+	$(CC) -o $(NATIVE_BUILD)/chess $(NATIVE_OBJS) $(LDFLAGS)
 
-run-native: native/chess
-	native/chess
+$(NATIVE_OBJ_PATH)/%.o: src/%.c include/%.h | $(NATIVE_OBJ_PATH)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(NATIVE_OBJ_PATH)/main.o: main/native.c | $(NATIVE_OBJ_PATH)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+run-native: $(NATIVE_BUILD)/chess
+	$(NATIVE_BUILD)/chess
 
 
 #
@@ -29,23 +37,26 @@ run-native: native/chess
 #
 
 EMFLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
-WEB_OBJS = $(shell ls src | sed 's|\(.*\)\.c|web/obj/\1.o|g') web/obj/main.o
+WEB_BUILD=$(BUILD_PATH)/web
+WEB_OBJ_PATH=$(WEB_BUILD)/obj
+WEB_OBJS = $(shell ls src | sed 's|\(.*\)\.c|$(WEB_OBJ_PATH)/\1.o|g') $(WEB_OBJ_PATH)/main.o
 
-web: web/chess.js static $(shell ls static/*)
-	cp static/* web
+# Todo: reorganize web assets
+web: $(WEB_BUILD)/chess.js static $(shell ls static/*)
+	cp static/* $(WEB_BUILD)
 
-web/chess.js: $(WEB_OBJS)
-	emcc -o web/chess.js $(WEB_OBJS) $(EMFLAGS) --preload-file pieces
+$(WEB_BUILD)/chess.js: $(WEB_OBJS)
+	emcc -o $(WEB_BUILD)/chess.js $(WEB_OBJS) $(EMFLAGS) --preload-file pieces
 
-web/obj/%.o: src/%.c include/%.h
-	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
+$(WEB_OBJ_PATH)/%.o: src/%.c include/%.h
+	mkdir -p $(WEB_OBJ_PATH); emcc -g $(CFLAGS) -c $< -o $@
 
-web/obj/main.o: main/web.c
-	mkdir -p web/obj; emcc -g $(CFLAGS) -c $< -o $@
+$(WEB_OBJ_PATH)/main.o: main/web.c
+	mkdir -p $(WEB_OBJ_PATH); emcc -g $(CFLAGS) -c $< -o $@
 
 run-web: web
 	echo "\nServing at http://localhost:8000/chess.html\n"
-	python3 -m http.server --directory web
+	python3 -m http.server --directory $(WEB_BUILD)
 
 
 #
@@ -53,4 +64,4 @@ run-web: web
 #
 
 clean:
-	rm -rf native web
+	rm -rf $(BUILD_PATH)
