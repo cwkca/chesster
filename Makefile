@@ -1,8 +1,9 @@
-.PHONY: native web run-native run-web
-.DEFAULT_GOAL := native
+.PHONY: all native web run-native run-web
 
 CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
 BUILD_PATH=build
+
+all: native web
 
 #
 # Native

@@ -1,20 +1,22 @@
 /** Native entry point and event loop. */
 
+#include <ctype.h>
 #include <SDL.h>
-
 #include "game.h"
 
 void poll_events()
 {
-    SDL_Event e;
+    SDL_Event event;
     while (1)
     {
-        if (SDL_WaitEvent(&e))
+        if (SDL_WaitEvent(&event))
         {
-            if (e.type == SDL_QUIT)
+            if (event.type == SDL_QUIT)
                 return;
-            if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
                 return;
+            if (event.type == SDL_KEYDOWN)
+                handle_key(event.key.keysym.sym);
         }
     }
 }

@@ -27,6 +27,12 @@ int start_game()
     return 0;
 }
 
+void handle_key(SDL_Keycode key)
+{
+    if (isprint(key))
+        printf("%c\n", (char)key);
+}
+
 void cleanup_game()
 {
     if (draw)
