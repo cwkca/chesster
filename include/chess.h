@@ -38,7 +38,13 @@ typedef enum
 extern const char *PIECE_NAMES;
 extern const char *COLORED_PIECE_NAMES;
 
+extern const char *STARTING_FEN;
+
 #define COLOR_MASK 8
 #define PIECE_MASK 7
+
+void init_piece_lookup();
+ColoredPiece get_piece_named(char piece);
+int load_fen(const char *fen);
 
 #endif /* CHESS_H */
