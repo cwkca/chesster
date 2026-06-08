@@ -5,29 +5,20 @@
 #include <stdio.h>
 
 #include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
 
 #include "draw_sdl.h"
 #include "sdl_util.h"
 #include "game.h"
 #include "chess.h"
 
-const char *PIECE_IMG_PATH = "pieces/png60";
-#define PATH_MAX 256
-
-const SDL_Rect CHESSBOARD_RECT = {160, 60, 480, 480};
+const SDL_Rect CHESSBOARD_RECT = {160, 40, 480, 480};
 const SDL_Color LIGHT_RGB = {200, 160, 130};
 const SDL_Color DARK_RGB = {100, 60, 30};
 
 int square_size;
 
-SDL_Surface *piece_imgs[16];
-
 /* Private function prototypes */
-int load_pieces(PieceColor color);
 int place_piece(ColoredPiece piece, int file, int rank);
-void cleanup_pieces();
 
 int init_draw_sdl()
 {
@@ -37,9 +28,6 @@ int init_draw_sdl()
     assert(CHESSBOARD_RECT.h == CHESSBOARD_RECT.w);
     assert(CHESSBOARD_RECT.h % 8 == 0);
     square_size = CHESSBOARD_RECT.h / 8;
-
-    if (load_pieces(WHITE) || load_pieces(BLACK))
-        return 1;
 
     return 0;
 }
@@ -68,6 +56,26 @@ int draw_board_sdl()
         square_rect.y += square_size;
     }
 
+    char label[2] = {0};
+    SDL_Point text_point;
+    text_point.x = CHESSBOARD_RECT.x - (square_size >> 1);
+    text_point.y = CHESSBOARD_RECT.y + (square_size >> 1);
+
+    for (rank = 8; rank > 0; rank--)
+    {
+        *label = rank + '0';
+        draw_text_centered(label, text_point);
+        text_point.y += square_size;
+    }
+
+    text_point.x += square_size;
+    for (file = 0; file < 8; file++)
+    {
+        *label = file + 'a';
+        draw_text_centered(label, text_point);
+        text_point.x += square_size;
+    }
+
     SDL_UpdateWindowSurface(window);
 
     return 0;
@@ -87,38 +95,14 @@ int draw_pieces_sdl()
     return 0;
 }
 
-void cleanup_sdl()
+void cleanup_draw_sdl()
 {
-    cleanup_pieces();
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    cleanup_sdl();
 }
 
 /*
  * Private functions
  */
-
-int load_pieces(PieceColor color)
-{
-    Piece piece;
-    char piece_path[PATH_MAX];
-    char color_code = color == WHITE ? 'w' : 'b';
-
-    for (piece = KING; piece <= PAWN; piece++)
-    {
-        sprintf(piece_path, "%s/%c%c.png",
-                PIECE_IMG_PATH, PIECE_NAMES[piece], color_code);
-        SDL_Surface *piece_img = IMG_Load(piece_path);
-        if (!piece_img)
-        {
-            printf("Failed to load piece %s: %s\n", piece_path, IMG_GetError());
-            return 1;
-        }
-        piece_imgs[color | piece] = piece_img;
-    }
-
-    return 0;
-}
 
 int place_piece(ColoredPiece piece, int file, int rank)
 {
@@ -134,14 +118,4 @@ int place_piece(ColoredPiece piece, int file, int rank)
     SDL_UpdateWindowSurface(window);
 
     return 0;
-}
-
-void cleanup_pieces()
-{
-    Piece piece;
-    for (piece = KING; piece <= PAWN; piece++)
-    {
-        SDL_FreeSurface(piece_imgs[WHITE | piece]);
-        SDL_FreeSurface(piece_imgs[BLACK | piece]);
-    }
 }
