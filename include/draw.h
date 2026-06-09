@@ -3,8 +3,8 @@
 
 typedef struct
 {
+    int (*draw_screen)();
     int (*draw_board)();
-    int (*draw_pieces)();
     void (*cleanup)();
 } DrawAdapter;
 

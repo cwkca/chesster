@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "draw_term.h"
 #include "game.h"
 
 const char *TERM_PIECES[] = {
@@ -11,10 +12,13 @@ const char *TERM_PIECES[] = {
 #define BUFFER_LEN 20
 char inverted_piece[BUFFER_LEN];
 
-void invert_piece(int piece_index)
+/* Private function prototypes */
+void invert_piece(int piece_index);
+
+int draw_screen_term()
 {
-    piece_index ^= COLOR_MASK;
-    sprintf(inverted_piece, "\033[7m%s\033[0m", TERM_PIECES[piece_index]);
+    return draw_board_term();
+    /* Todo: add board labels */
 }
 
 int draw_board_term()
@@ -49,9 +53,14 @@ int draw_board_term()
     return 0;
 }
 
-int draw_pieces_term()
-{
-    return 0;
-}
-
 void cleanup_term() {}
+
+/*
+ * Private functions
+ */
+
+void invert_piece(int piece_index)
+{
+    piece_index ^= COLOR_MASK;
+    sprintf(inverted_piece, "\033[7m%s\033[0m", TERM_PIECES[piece_index]);
+}

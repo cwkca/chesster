@@ -22,7 +22,7 @@ int init_game()
 int start_game()
 {
     assert(load_fen(STARTING_FEN) == 0);
-    if (draw->draw_board() || draw->draw_pieces())
+    if (draw->draw_screen())
         return 1;
     return 0;
 }

@@ -8,7 +8,7 @@
 #include "game.h"
 
 const char *PIECE_NAMES = "_kqrbnp_";
-const char *COLORED_PIECE_NAMES = "_kqrbnp__KQRBNP_";
+const char *COLORED_PIECE_NAMES = "_KQRBNP__kqrbnp_";
 
 #define LUT_SIZE 50
 ColoredPiece PIECE_LOOKUP[LUT_SIZE];

@@ -8,14 +8,14 @@
 #include "chess.h"
 
 DrawAdapter TERM_DRAW = {
+    &draw_screen_term,
     &draw_board_term,
-    &draw_pieces_term,
     &cleanup_term,
 };
 
 DrawAdapter SDL_DRAW = {
+    &draw_screen_sdl,
     &draw_board_sdl,
-    &draw_pieces_sdl,
     &cleanup_sdl,
 };
 
