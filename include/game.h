@@ -8,7 +8,7 @@ extern ColoredPiece board[8][8];
 
 int init_game();
 int start_game();
-void handle_key(SDL_Keycode key);
+void handle_key(SDL_Keysym keysym);
 void cleanup_game();
 
 #endif /* GAME_H */

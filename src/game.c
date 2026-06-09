@@ -37,8 +37,12 @@ int start_game()
     return 0;
 }
 
-void handle_key(SDL_Keycode key)
+void handle_key(SDL_Keysym keysym)
 {
+    SDL_Keycode key = keysym.sym;
+    if (key > SDLK_SCANCODE_MASK)
+        return;
+
     if (key > '0' && key < '9')
     {
         highlight = key - '1';
@@ -49,12 +53,21 @@ void handle_key(SDL_Keycode key)
         highlight = key - 'a';
         highlight_board(highlight_file);
     }
-
     else
         highlight_board(no_highlight);
 
     draw->draw_board();
 }
+
+void cleanup_game()
+{
+    if (draw)
+        draw->cleanup();
+}
+
+/*
+ * Private functions
+ */
 
 SDL_Color highlight_rank(int rank, int file)
 {
@@ -69,10 +82,4 @@ SDL_Color highlight_file(int rank, int file)
 SDL_Color no_highlight(int rank, int file)
 {
     return NO_COLOR;
-}
-
-void cleanup_game()
-{
-    if (draw)
-        draw->cleanup();
 }

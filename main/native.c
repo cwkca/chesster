@@ -16,7 +16,7 @@ void poll_events()
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
                 return;
             if (event.type == SDL_KEYDOWN)
-                handle_key(event.key.keysym.sym);
+                handle_key(event.key.keysym);
         }
     }
 }
