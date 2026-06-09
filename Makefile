@@ -42,17 +42,20 @@ WEB_BUILD=$(BUILD_PATH)/web
 WEB_OBJ_PATH=$(WEB_BUILD)/obj
 WEB_OBJS = $(shell ls src | sed 's|\(.*\)\.c|$(WEB_OBJ_PATH)/\1.o|g') $(WEB_OBJ_PATH)/main.o
 
-web: $(WEB_BUILD)/chess.js $(shell ls assets/web/*)
+web: $(WEB_BUILD)/chess.js
+
+$(WEB_BUILD)/chess.js: $(WEB_OBJS) $(shell find assets -type f)
+	emcc -o $(WEB_BUILD)/chess.js $(WEB_OBJS) $(EMFLAGS) --preload-file assets
 	cp assets/web/* $(WEB_BUILD)
 
-$(WEB_BUILD)/chess.js: $(WEB_OBJS)
-	emcc -o $(WEB_BUILD)/chess.js $(WEB_OBJS) $(EMFLAGS) --preload-file assets
+$(WEB_OBJ_PATH)/%.o: src/%.c include/%.h | $(WEB_OBJ_PATH)
+	emcc -g $(CFLAGS) -c $< -o $@
 
-$(WEB_OBJ_PATH)/%.o: src/%.c include/%.h
-	mkdir -p $(WEB_OBJ_PATH); emcc -g $(CFLAGS) -c $< -o $@
+$(WEB_OBJ_PATH)/main.o: main/web.c | $(WEB_OBJ_PATH)
+	emcc -g $(CFLAGS) -c $< -o $@
 
-$(WEB_OBJ_PATH)/main.o: main/web.c
-	mkdir -p $(WEB_OBJ_PATH); emcc -g $(CFLAGS) -c $< -o $@
+$(WEB_OBJ_PATH):
+	mkdir -p $(WEB_OBJ_PATH)
 
 run-web: web
 	echo "\nServing at http://localhost:8000/chess.html\n"
