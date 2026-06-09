@@ -9,6 +9,7 @@
 #include "draw_sdl.h"
 #include "sdl_util.h"
 #include "game.h"
+#include "draw.h"
 #include "chess.h"
 
 const SDL_Rect CHESSBOARD_RECT = {160, 40, 480, 480};
@@ -21,7 +22,7 @@ int square_size;
 void draw_empty_board();
 void draw_pieces();
 void draw_piece(ColoredPiece piece, int file, int rank);
-void draw_board_labels();
+int draw_board_labels();
 
 int init_draw_sdl()
 {
@@ -40,15 +41,14 @@ int draw_screen_sdl()
     if (draw_board_sdl())
         return 1;
 
-    draw_board_labels();
-    return 0;
+    return draw_board_labels();
 }
 
 int draw_board_sdl()
 {
     draw_empty_board();
     draw_pieces();
-    return 0;
+    return SDL_UpdateWindowSurface(window);
 }
 
 void cleanup_draw_sdl()
@@ -77,8 +77,22 @@ void draw_empty_board()
         square_rect.x = CHESSBOARD_RECT.x;
         for (file = 0; file < 8; file++)
         {
-            Uint32 color = (rank + file) % 2 ? light_color : dark_color;
-            SDL_FillRect(winSurface, &square_rect, color);
+            SDL_Color board_color = (rank + file) % 2 ? LIGHT_RGB : DARK_RGB;
+            SDL_Color highlight = square_highlights[(rank << 3) + file];
+
+            Uint32 square_color;
+            if (highlight.a)
+            {
+                square_color = SDL_MapRGB(
+                    winSurface->format,
+                    (highlight.r >> 1) + (board_color.r >> 1),
+                    (highlight.g >> 1) + (board_color.g >> 1),
+                    (highlight.b >> 1) + (board_color.b >> 1));
+            }
+            else
+                square_color = SDL_MapRGB(winSurface->format, board_color.r, board_color.g, board_color.b);
+
+            SDL_FillRect(winSurface, &square_rect, square_color);
             square_rect.x += square_size;
         }
         square_rect.y += square_size;
@@ -108,10 +122,9 @@ void draw_piece(ColoredPiece piece, int file, int rank)
     };
 
     SDL_BlitSurface(piece_imgs[piece], NULL, winSurface, &pieceRect);
-    SDL_UpdateWindowSurface(window);
 }
 
-void draw_board_labels()
+int draw_board_labels()
 {
     int i;
     char label[2] = {0};
@@ -134,5 +147,5 @@ void draw_board_labels()
         text_point.x += square_size;
     }
 
-    SDL_UpdateWindowSurface(window);
+    return SDL_UpdateWindowSurface(window);
 }

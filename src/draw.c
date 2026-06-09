@@ -1,11 +1,13 @@
 /** Game-specific graphics. */
 
 #include <stdlib.h>
+#include <SDL.h>
 
 #include "draw.h"
 #include "draw_sdl.h"
 #include "draw_term.h"
-#include "chess.h"
+
+SDL_Color square_highlights[64] = {0};
 
 DrawAdapter TERM_DRAW = {
     &draw_screen_term,
@@ -24,4 +26,19 @@ DrawAdapter *init_draw()
     return !getenv("CHESSTERM") && init_draw_sdl() == 0
                ? &SDL_DRAW
                : &TERM_DRAW;
+}
+
+void highlight_board(DrawAdapter *draw, SDL_Color color, int (*highlight)(int, int))
+{
+    int rank, file;
+    SDL_Color *square = square_highlights;
+    for (rank = 0; rank < 8; rank++)
+        for (file = 0; file < 8; file++)
+        {
+            if (highlight(rank, file))
+                *square++ = color;
+            else
+                (square++)->a = 0;
+        }
+    draw->draw_board();
 }
