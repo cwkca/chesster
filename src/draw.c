@@ -28,17 +28,11 @@ DrawAdapter *init_draw()
                : &TERM_DRAW;
 }
 
-void highlight_board(DrawAdapter *draw, SDL_Color color, int (*highlight)(int, int))
+void highlight_board(SDL_Color (*highlight)(int, int))
 {
     int rank, file;
     SDL_Color *square = square_highlights;
     for (rank = 0; rank < 8; rank++)
         for (file = 0; file < 8; file++)
-        {
-            if (highlight(rank, file))
-                *square++ = color;
-            else
-                (square++)->a = 0;
-        }
-    draw->draw_board();
+            *square++ = highlight(rank, file);
 }

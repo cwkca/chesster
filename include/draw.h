@@ -14,6 +14,6 @@ typedef struct
 
 DrawAdapter *init_draw();
 
-void highlight_board(DrawAdapter *, SDL_Color color, int (*highlight)(int, int));
+void highlight_board(SDL_Color (*highlight)(int, int));
 
 #endif /* DRAW_H */

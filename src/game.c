@@ -9,14 +9,15 @@
 DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
+const SDL_Color NO_COLOR = {0};
 const SDL_Color HIGHLIGHT_COLOR = {0, 0, 255, 255};
 
 int highlight;
 
 /* Private function prototypes */
-int highlight_rank(int rank, int file);
-int highlight_file(int rank, int file);
-int no_highlight(int rank, int file);
+SDL_Color highlight_rank(int rank, int file);
+SDL_Color highlight_file(int rank, int file);
+SDL_Color no_highlight(int rank, int file);
 
 int init_game()
 {
@@ -41,31 +42,33 @@ void handle_key(SDL_Keycode key)
     if (key > '0' && key < '9')
     {
         highlight = key - '1';
-        highlight_board(draw, HIGHLIGHT_COLOR, highlight_rank);
+        highlight_board(highlight_rank);
     }
     else if (key >= 'a' && key <= 'h')
     {
         highlight = key - 'a';
-        highlight_board(draw, HIGHLIGHT_COLOR, highlight_file);
+        highlight_board(highlight_file);
     }
 
     else
-        highlight_board(draw, HIGHLIGHT_COLOR, no_highlight);
+        highlight_board(no_highlight);
+
+    draw->draw_board();
 }
 
-int highlight_rank(int rank, int file)
+SDL_Color highlight_rank(int rank, int file)
 {
-    return rank == highlight;
+    return rank == highlight ? HIGHLIGHT_COLOR : NO_COLOR;
 }
 
-int highlight_file(int rank, int file)
+SDL_Color highlight_file(int rank, int file)
 {
-    return file == highlight;
+    return file == highlight ? HIGHLIGHT_COLOR : NO_COLOR;
 }
 
-int no_highlight(int rank, int file)
+SDL_Color no_highlight(int rank, int file)
 {
-    return 0;
+    return NO_COLOR;
 }
 
 void cleanup_game()
