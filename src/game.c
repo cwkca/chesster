@@ -9,12 +9,10 @@
 DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
-const SDL_Color NO_COLOR = {0};
-const SDL_Color HIGHLIGHT_COLOR = {0, 0, 255, 255};
-
 int highlight;
 
 /* Private function prototypes */
+void highlight_rank_file(SDL_Keysym keysym);
 SDL_Color highlight_rank(int rank, int file);
 SDL_Color highlight_file(int rank, int file);
 SDL_Color no_highlight(int rank, int file);
@@ -39,6 +37,21 @@ int start_game()
 
 void handle_key(SDL_Keysym keysym)
 {
+    highlight_rank_file(keysym);
+}
+
+void cleanup_game()
+{
+    if (draw)
+        draw->cleanup();
+}
+
+/*
+ * Private functions
+ */
+
+void highlight_rank_file(SDL_Keysym keysym)
+{
     SDL_Keycode key = keysym.sym;
     if (key > SDLK_SCANCODE_MASK)
         return;
@@ -59,27 +72,17 @@ void handle_key(SDL_Keysym keysym)
     draw->draw_board();
 }
 
-void cleanup_game()
-{
-    if (draw)
-        draw->cleanup();
-}
-
-/*
- * Private functions
- */
-
 SDL_Color highlight_rank(int rank, int file)
 {
-    return rank == highlight ? HIGHLIGHT_COLOR : NO_COLOR;
+    return rank == highlight ? BLUE : CLEAR;
 }
 
 SDL_Color highlight_file(int rank, int file)
 {
-    return file == highlight ? HIGHLIGHT_COLOR : NO_COLOR;
+    return file == highlight ? BLUE : CLEAR;
 }
 
 SDL_Color no_highlight(int rank, int file)
 {
-    return NO_COLOR;
+    return CLEAR;
 }

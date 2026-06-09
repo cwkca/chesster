@@ -3,6 +3,9 @@
 
 #include <SDL.h>
 
+extern const SDL_Color C_BLACK, C_WHITE, GREY, CLEAR;
+extern const SDL_Color RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA;
+
 extern SDL_Color square_highlights[64];
 
 typedef struct

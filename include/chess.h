@@ -15,8 +15,8 @@ typedef enum
 
 typedef enum
 {
-    WHITE = 0,
-    BLACK = 8
+    P_WHITE = 0,
+    P_BLACK = 8
 } PieceColor;
 
 typedef enum

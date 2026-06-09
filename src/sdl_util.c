@@ -9,6 +9,7 @@
 
 #include "sdl_util.h"
 #include "chess.h"
+#include "draw.h"
 
 SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
 const char *PIECE_IMG_PATH = "assets/pieces/png60";
@@ -42,7 +43,7 @@ int init_sdl()
     if (init_fonts())
         return 1;
 
-    if (load_pieces(WHITE) || load_pieces(BLACK))
+    if (load_pieces(P_WHITE) || load_pieces(P_BLACK))
         return 1;
 
     return 0;
@@ -57,10 +58,9 @@ void draw_rect(SDL_Rect rect, Uint8 r, Uint8 g, Uint8 b)
 
 void draw_text_centered(const char *text, SDL_Point point)
 {
-    SDL_Color textColor = {255, 255, 255, 255};
     SDL_Rect textRect = {0};
 
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, textColor);
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, C_WHITE);
 
     textRect.x = point.x - (textSurface->w >> 1);
     textRect.y = point.y - (textSurface->h >> 1);
@@ -119,7 +119,7 @@ int load_pieces(PieceColor color)
 {
     Piece piece;
     char piece_path[PATH_MAX];
-    char color_code = color == WHITE ? 'w' : 'b';
+    char color_code = color == P_WHITE ? 'w' : 'b';
 
     for (piece = KING; piece <= PAWN; piece++)
     {
@@ -142,7 +142,7 @@ void cleanup_pieces()
     Piece piece;
     for (piece = KING; piece <= PAWN; piece++)
     {
-        SDL_FreeSurface(piece_imgs[WHITE | piece]);
-        SDL_FreeSurface(piece_imgs[BLACK | piece]);
+        SDL_FreeSurface(piece_imgs[P_WHITE | piece]);
+        SDL_FreeSurface(piece_imgs[P_BLACK | piece]);
     }
 }

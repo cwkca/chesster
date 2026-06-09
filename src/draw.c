@@ -7,6 +7,17 @@
 #include "draw_sdl.h"
 #include "draw_term.h"
 
+const SDL_Color C_BLACK = {0, 0, 0, 0xFF};
+const SDL_Color C_WHITE = {0xFF, 0xFF, 0xFF, 0xFF};
+const SDL_Color GREY = {0x7F, 0x7F, 0x7F, 0xFF};
+const SDL_Color CLEAR = {0};
+const SDL_Color RED = {0xFF, 0, 0, 0xFF};
+const SDL_Color YELLOW = {0xFF, 0xFF, 0, 0xFF};
+const SDL_Color GREEN = {0, 0xFF, 0, 0xFF};
+const SDL_Color CYAN = {0, 0xFF, 0xFF, 0xFF};
+const SDL_Color BLUE = {0, 0, 0xFF, 0xFF};
+const SDL_Color MAGENTA = {0xFF, 0, 0xFF, 0xFF};
+
 SDL_Color square_highlights[64] = {0};
 
 DrawAdapter TERM_DRAW = {
