@@ -2,6 +2,7 @@
 #define DRAW_H
 
 #include <SDL.h>
+#include "chess.h"
 
 extern const SDL_Color C_BLACK, C_WHITE, GREY, CLEAR;
 extern const SDL_Color RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA;
@@ -17,6 +18,7 @@ typedef struct
 
 DrawAdapter *init_draw();
 
-void highlight_board(SDL_Color (*highlight)(int, int));
+void highlight_squares(Bitboard squares, SDL_Color color);
+void clear_board_highlights();
 
 #endif /* DRAW_H */

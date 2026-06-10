@@ -35,16 +35,24 @@ typedef enum
     BLACK_PAWN
 } ColoredPiece;
 
+typedef char Bitboard[8];
+
+#define COLOR_MASK 8
+#define PIECE_MASK 7
+
 extern const char *PIECE_NAMES;
 extern const char *COLORED_PIECE_NAMES;
 
 extern const char *STARTING_FEN;
 
-#define COLOR_MASK 8
-#define PIECE_MASK 7
-
 void init_piece_lookup();
+char is_color(ColoredPiece piece, PieceColor color);
 ColoredPiece get_piece_named(char piece);
 int load_fen(const char *fen);
+void get_moves(ColoredPiece *board, int square,
+               char for_control, Bitboard moves);
+void get_all_moves(ColoredPiece *board, PieceColor color,
+                   char for_control, Bitboard moves);
+void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap);
 
 #endif /* CHESS_H */

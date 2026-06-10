@@ -1,6 +1,7 @@
 /** Game-specific graphics. */
 
 #include <stdlib.h>
+#include <string.h>
 #include <SDL.h>
 
 #include "draw.h"
@@ -32,6 +33,9 @@ DrawAdapter SDL_DRAW = {
     &cleanup_sdl,
 };
 
+/* Private function prototypes */
+SDL_Color no_highlights(int rank, int file);
+
 DrawAdapter *init_draw()
 {
     return !getenv("CHESSTERM") && init_draw_sdl() == 0
@@ -39,11 +43,35 @@ DrawAdapter *init_draw()
                : &TERM_DRAW;
 }
 
-void highlight_board(SDL_Color (*highlight)(int, int))
+void highlight_squares(Bitboard squares, SDL_Color color)
 {
     int rank, file;
     SDL_Color *square = square_highlights;
+    char mask, *rank_highlights = squares;
     for (rank = 0; rank < 8; rank++)
+    {
+        mask = 1;
         for (file = 0; file < 8; file++)
-            *square++ = highlight(rank, file);
+        {
+            if (*rank_highlights & mask)
+                *square = color;
+            mask <<= 1;
+            square++;
+        }
+        rank_highlights++;
+    }
+}
+
+void clear_board_highlights()
+{
+    memset(square_highlights, 0, sizeof(square_highlights));
+}
+
+/*
+ * Private functions
+ */
+
+SDL_Color no_highlights(int rank, int file)
+{
+    return CLEAR;
 }
