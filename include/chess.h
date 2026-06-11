@@ -62,8 +62,11 @@ void get_all_moves(ColoredPiece board[8][8], PieceColor color,
 void clear_board(Bitboard board);
 char board_empty(Bitboard board);
 void set_square(int square, Bitboard board);
+void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap);
+
+/*
 int find_rank_squares(Bitboard board, int rank, int *squares);
 int find_file_squares(Bitboard board, int file, int *squares);
-void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap);
+*/
 
 #endif /* CHESS_H */

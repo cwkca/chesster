@@ -10,8 +10,10 @@
 DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
-int src_squares[10], dest_squares[10];
-Bitboard moves;
+int src_squares[10];
+int *curr_sq, src_sq, dest_sq;
+Bitboard all_moves;
+int rank_srcs[8][10], file_srcs[8][10], *r_src[8], *f_src[8];
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -23,6 +25,7 @@ void (*key_handler)(SDL_Keycode key) = select_piece;
 
 /* Other private functions */
 void show_controlled_squares();
+void collect_moves();
 
 int init_game()
 {
@@ -77,88 +80,151 @@ void show_controlled_squares()
     draw->draw_board();
 }
 
+void collect_moves()
+{
+    Bitboard moves;
+    int rank, file, square, mask;
+
+    while (*curr_sq >= 0)
+    {
+        clear_board(moves);
+        square = *curr_sq++;
+        get_moves(board, square, 0, moves);
+        for (rank = 0; rank < 8; rank++)
+            if (moves[rank])
+            {
+                *r_src[rank]++ = square;
+                all_moves[rank] = all_moves[rank] | moves[rank];
+
+                mask = 1;
+                for (file = 0; file < 8; file++, mask <<= 1)
+                    if (moves[rank] & mask)
+                        *f_src[file]++ = square;
+            }
+    }
+}
+
 void select_piece(SDL_Keycode key)
 {
-    clear_board(moves);
-    *src_squares = *dest_squares = -1;
-    int *square = src_squares;
+    clear_board(all_moves);
+    *src_squares = -1;
+    curr_sq = src_squares;
+    src_sq = dest_sq = -1;
 
     clear_board_highlights();
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
+
+    int i;
+    for (i = 0; i < 8; i++)
+    {
+        r_src[i] = rank_srcs[i];
+        f_src[i] = file_srcs[i];
+    }
 
     if (key == 'b')
     {
         /* Select both bishops and pawns */
         find_pieces(board, WHITE_BISHOP, src_squares);
-        while (*square >= 0)
-            get_moves(board, *square++, 0, moves);
-        find_file_pawns(board, P_WHITE, 1, square);
+        collect_moves();
+        find_file_pawns(board, P_WHITE, 1, curr_sq);
     }
     else if (key >= 'a' && key <= 'h')
         find_file_pawns(board, P_WHITE, key - 'a', src_squares);
     else if (is_piece)
         find_pieces(board, get_piece_named(key) & PIECE_MASK, src_squares);
+    else if (key == SDLK_BACKSPACE)
+    {
+        for (i = 0; i < 64; i++)
+            square_highlights[i] = RED;
+        key_handler = confirm;
+        draw->draw_board();
+        return;
+    }
 
-    while (*square >= 0)
-        get_moves(board, *square++, 0, moves);
+    collect_moves();
+    for (i = 0; i < 8; i++)
+    {
+        *r_src[i] = -1;
+        *f_src[i] = -1;
+    }
 
-    key_handler = board_empty(moves) ? select_piece : select_rank_or_file;
+    key_handler = board_empty(all_moves) ? select_piece : select_rank_or_file;
 
-    for (square = src_squares; *square >= 0; square++)
-        square_highlights[*square] = BLUE;
-    highlight_squares(moves, CYAN);
+    for (curr_sq = src_squares; *curr_sq >= 0; curr_sq++)
+        square_highlights[*curr_sq] = BLUE;
+    highlight_squares(all_moves, CYAN);
 
     draw->draw_board();
 }
 
 void select_rank_or_file(SDL_Keycode key)
 {
-    int square_count;
+    int rank, file, mask, *options;
 
     if (key >= 'a' && key <= 'h')
     {
-        square_count = find_file_squares(moves, key - 'a', dest_squares);
-
-        if (square_count == 1)
+        file = key - 'a';
+        options = file_srcs[file];
+        if (*options >= 0 && options[1] == -1)
         {
-            key_handler = confirm;
-            return;
-        }
-        else if (square_count > 1)
-        {
-            /* Todo */
-            return;
+            src_sq = *options;
+            mask = 1 << file;
+            for (rank = 0; rank < 8; rank++)
+                if (all_moves[rank] & mask)
+                {
+                    dest_sq = (rank << 3) + file;
+                    break;
+                }
         }
     }
     else if (key > '0' && key < '9')
     {
-        square_count = find_rank_squares(moves, key - '1', dest_squares);
-
-        if (square_count == 1)
+        rank = key - '1';
+        options = rank_srcs[rank];
+        if (*options >= 0 && options[1] == -1)
         {
-            key_handler = confirm;
-            return;
-        }
-        else if (square_count > 1)
-        {
-            /* Todo */
-            return;
+            src_sq = *options;
+            mask = 1;
+            for (file = 0; file < 8; file++, mask <<= 1)
+                if (all_moves[rank] & mask)
+                {
+                    dest_sq = (rank << 3) + file;
+                    break;
+                }
         }
     }
 
-    select_piece(key);
+    if (src_sq >= 0)
+    {
+        clear_board_highlights();
+        square_highlights[src_sq] = BLUE;
+        square_highlights[dest_sq] = CYAN;
+        draw->draw_board();
+        key_handler = confirm;
+    }
+    else
+        select_piece(key);
 }
 
 void confirm(SDL_Keycode key)
 {
-    if (key == SDLK_ESCAPE)
+    if (key == SDLK_RETURN)
     {
-        *src_squares = -1;
-        key_handler = select_piece;
-        clear_board_highlights();
-        draw->draw_board();
-        return;
+        if (src_sq < 0)
+        {
+            start_game();
+            return;
+        }
+        else
+        {
+            ColoredPiece *squares = (ColoredPiece *)board;
+            ColoredPiece piece = squares[src_sq];
+            squares[src_sq] = 0;
+            squares[dest_sq] = piece;
+        }
     }
 
-    /* Todo */
+    key_handler = select_piece;
+    clear_board_highlights();
+    draw->draw_board();
 }
