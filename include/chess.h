@@ -46,13 +46,24 @@ extern const char *COLORED_PIECE_NAMES;
 extern const char *STARTING_FEN;
 
 void init_piece_lookup();
+
 char is_color(ColoredPiece piece, PieceColor color);
 ColoredPiece get_piece_named(char piece);
+
 int load_fen(const char *fen);
-void get_moves(ColoredPiece *board, int square,
+
+void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, int *squares);
+void find_file_pawns(ColoredPiece board[8][8], PieceColor color, int file, int *squares);
+void get_moves(ColoredPiece board[8][8], int square,
                char for_control, Bitboard moves);
-void get_all_moves(ColoredPiece *board, PieceColor color,
+void get_all_moves(ColoredPiece board[8][8], PieceColor color,
                    char for_control, Bitboard moves);
+
+void clear_board(Bitboard board);
+char board_empty(Bitboard board);
+void set_square(int square, Bitboard board);
+int find_rank_squares(Bitboard board, int rank, int *squares);
+int find_file_squares(Bitboard board, int file, int *squares);
 void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap);
 
 #endif /* CHESS_H */

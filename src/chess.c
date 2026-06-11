@@ -48,9 +48,9 @@ typedef enum
 int safe_get_lut_index(char piece);
 void report_fen_error(const char *fen, int index);
 void get_slider_moves(
-    ColoredPiece *board, PieceColor color, CaptureMode capture,
+    ColoredPiece *board, int src_square, CaptureMode capture,
     int rank, int file, int dir_offset, int dir_inc, Bitboard moves);
-char check_move(ColoredPiece *board, PieceColor color, CaptureMode capture,
+char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves);
 char in_bounds(int rank, int file);
 
@@ -140,10 +140,33 @@ int load_fen(const char *fen)
     return 0;
 }
 
-void get_moves(ColoredPiece *board, int square,
+void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, int *squares)
+{
+    ColoredPiece *brd = (ColoredPiece *)board;
+    int sq, *square = squares;
+    for (sq = 0; sq < 64; sq++)
+        if (brd[sq] == piece)
+            *square++ = sq;
+    *square = -1;
+}
+
+void find_file_pawns(ColoredPiece board[8][8], PieceColor color, int file, int *squares)
+{
+    int rank, *square = squares;
+    for (rank = 0; rank < 8; rank++)
+        if (board[rank][file] == (color | PAWN))
+            *square++ = (rank << 3) + file;
+    *square = -1;
+}
+
+void get_moves(ColoredPiece board[8][8], int square,
                char for_control, Bitboard moves)
 {
-    ColoredPiece piece = *(board + square);
+    if (square < 0)
+        return;
+
+    ColoredPiece *squares = (ColoredPiece *)board;
+    ColoredPiece piece = squares[square];
     PieceColor color = piece & COLOR_MASK;
     int rank = square >> 3;
     int file = square & 7;
@@ -159,27 +182,27 @@ void get_moves(ColoredPiece *board, int square,
     case KING:
         for (dir = DIRECTIONS; (dir - DIRECTIONS) < sizeof(DIRECTIONS); dir += 2)
         {
-            check_move(board, color, capture,
+            check_move(squares, square, capture,
                        rank + dir[0], file + dir[1], moves);
         }
         break;
 
     case QUEEN:
-        get_slider_moves(board, color, capture, rank, file, 0, 1, moves);
+        get_slider_moves(squares, square, capture, rank, file, 0, 1, moves);
         break;
 
     case ROOK:
-        get_slider_moves(board, color, capture, rank, file, 0, 2, moves);
+        get_slider_moves(squares, square, capture, rank, file, 0, 2, moves);
         break;
 
     case BISHOP:
-        get_slider_moves(board, color, capture, rank, file, 1, 2, moves);
+        get_slider_moves(squares, square, capture, rank, file, 1, 2, moves);
         break;
 
     case KNIGHT:
         for (dir = KNIGHT_DIRS; (dir - KNIGHT_DIRS) < sizeof(KNIGHT_DIRS); dir += 2)
         {
-            check_move(board, color, capture,
+            check_move(squares, square, capture,
                        rank + dir[0], file + dir[1], moves);
         }
         break;
@@ -197,17 +220,16 @@ void get_moves(ColoredPiece *board, int square,
         }
 
         capture = for_control ? CAPTURE_ANY : MUST_CAPTURE_ENEMY;
-        check_move(board, color, capture, rank + forward, file + 1, moves);
-        check_move(board, color, capture, rank + forward, file - 1, moves);
+        check_move(squares, square, capture, rank + forward, file + 1, moves);
+        check_move(squares, square, capture, rank + forward, file - 1, moves);
 
         if (!for_control)
         {
-            check_move(board, color, NO_CAPTURE, rank + forward, file, moves);
+            check_move(squares, square, NO_CAPTURE, rank + forward, file, moves);
             if (home_row)
             {
-                check_move(board, color,
-                           rank + forward + forward, file,
-                           NO_CAPTURE, moves);
+                check_move(squares, square, NO_CAPTURE,
+                           rank + forward + forward, file, moves);
             }
         }
 
@@ -218,15 +240,61 @@ void get_moves(ColoredPiece *board, int square,
     }
 }
 
-void get_all_moves(ColoredPiece *board, PieceColor color,
+void get_all_moves(ColoredPiece board[8][8], PieceColor color,
                    char for_control, Bitboard moves)
 {
-    memset(moves, 0, 8);
+    clear_board(moves);
+    ColoredPiece *squares = (ColoredPiece *)board;
 
-    int square;
-    for (square = 0; square < 64; square++)
-        if (is_color(*(board + square), color))
-            get_moves(board, square, for_control, moves);
+    int sq;
+    for (sq = 0; sq < 64; sq++)
+        if (is_color(squares[sq], color))
+            get_moves(board, sq, for_control, moves);
+}
+
+void clear_board(Bitboard board)
+{
+    memset(board, 0, 8);
+}
+
+char board_empty(Bitboard board)
+{
+    int rank;
+    for (rank = 0; rank < 8; rank++)
+        if (board[rank])
+            return 0;
+    return 1;
+}
+
+void set_square(int square, Bitboard board)
+{
+    board[square >> 3] |= 1 << (square & 7);
+}
+
+int find_rank_squares(Bitboard board, int rank, int *squares)
+{
+    int file, *square = squares;
+    char mask = 1;
+
+    for (file = 0; file < 8; file++, mask <<= 1)
+        if (board[rank & mask])
+            *square++ = (rank << 3) + file;
+    *square = -1;
+
+    return square - squares;
+}
+
+int find_file_squares(Bitboard board, int file, int *squares)
+{
+    int rank, *square = squares;
+    char mask = 1 << file;
+
+    for (rank = 0; rank < 8; rank++)
+        if (board[rank] & mask)
+            *square++ = (rank << 3) + file;
+    *square = -1;
+
+    return square - squares;
 }
 
 void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap)
@@ -255,7 +323,7 @@ void report_fen_error(const char *fen, int index)
 }
 
 void get_slider_moves(
-    ColoredPiece *board, PieceColor color, CaptureMode capture,
+    ColoredPiece *board, int src_square, CaptureMode capture,
     int rank, int file, int dir_offset, int dir_inc, Bitboard moves)
 {
     int r, f;
@@ -266,7 +334,7 @@ void get_slider_moves(
          dir += (dir_inc << 1))
     {
         for (r = rank + dir[0], f = file + dir[1];
-             check_move(board, color, capture, r, f, moves) &&
+             check_move(board, src_square, capture, r, f, moves) &&
              !(board[(r << 3) + f]);
              r += dir[0], f += dir[1])
             ;
@@ -274,12 +342,14 @@ void get_slider_moves(
 }
 
 /* Return whether the move is possible. */
-char check_move(ColoredPiece *board, PieceColor color, CaptureMode capture,
+char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves)
 {
     if (!in_bounds(rank, file))
         return 0;
 
+    ColoredPiece piece = board[src_square];
+    PieceColor color = piece & COLOR_MASK;
     ColoredPiece target = board[(rank << 3) + file];
     switch (capture)
     {
@@ -305,6 +375,7 @@ char check_move(ColoredPiece *board, PieceColor color, CaptureMode capture,
         printf("Invalid capture mode %d\n", capture);
     }
 
+    /* printf("Found mode %d move to square %d, %d\n", capture, rank, file); */
     moves[rank] |= (1 << file);
     return 1;
 }
