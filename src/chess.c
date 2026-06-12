@@ -279,34 +279,6 @@ void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap)
 }
 
 /*
-int find_rank_squares(Bitboard board, int rank, int *squares)
-{
-    int file, *square = squares;
-    char mask = 1;
-
-    for (file = 0; file < 8; file++, mask <<= 1)
-        if (board[rank & mask])
-            *square++ = (rank << 3) + file;
-    *square = -1;
-
-    return square - squares;
-}
-
-int find_file_squares(Bitboard board, int file, int *squares)
-{
-    int rank, *square = squares;
-    char mask = 1 << file;
-
-    for (rank = 0; rank < 8; rank++)
-        if (board[rank] & mask)
-            *square++ = (rank << 3) + file;
-    *square = -1;
-
-    return square - squares;
-}
-*/
-
-/*
  * Private functions
  */
 

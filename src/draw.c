@@ -33,9 +33,6 @@ DrawAdapter SDL_DRAW = {
     &cleanup_sdl,
 };
 
-/* Private function prototypes */
-SDL_Color no_highlights(int rank, int file);
-
 DrawAdapter *init_draw()
 {
     return !getenv("CHESSTERM") && init_draw_sdl() == 0
@@ -65,13 +62,4 @@ void highlight_squares(Bitboard squares, SDL_Color color)
 void clear_board_highlights()
 {
     memset(square_highlights, 0, sizeof(square_highlights));
-}
-
-/*
- * Private functions
- */
-
-SDL_Color no_highlights(int rank, int file)
-{
-    return CLEAR;
 }

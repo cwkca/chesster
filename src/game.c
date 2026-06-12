@@ -40,11 +40,7 @@ int init_game()
 int start_game()
 {
     assert(load_fen(STARTING_FEN) == 0);
-    if (draw->draw_screen())
-        return 1;
-
-    show_controlled_squares();
-    return 0;
+    return draw->draw_screen();
 }
 
 void handle_key(SDL_Keysym keysym)
@@ -211,10 +207,7 @@ void confirm(SDL_Keycode key)
     if (key == SDLK_RETURN)
     {
         if (src_sq < 0)
-        {
             start_game();
-            return;
-        }
         else
         {
             ColoredPiece *squares = (ColoredPiece *)board;
