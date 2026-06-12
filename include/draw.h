@@ -18,7 +18,7 @@ typedef struct
 
 DrawAdapter *init_draw();
 
-void highlight_squares(Bitboard squares, SDL_Color color);
+void highlight_squares(const Bitboard squares, SDL_Color color);
 void clear_board_highlights();
 
 #endif /* DRAW_H */

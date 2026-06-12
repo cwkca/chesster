@@ -33,9 +33,6 @@ DrawAdapter SDL_DRAW = {
     &cleanup_sdl,
 };
 
-/* Private function prototypes */
-SDL_Color no_highlights(int rank, int file);
-
 DrawAdapter *init_draw()
 {
     return !getenv("CHESSTERM") && init_draw_sdl() == 0
@@ -43,11 +40,12 @@ DrawAdapter *init_draw()
                : &TERM_DRAW;
 }
 
-void highlight_squares(Bitboard squares, SDL_Color color)
+void highlight_squares(const Bitboard squares, SDL_Color color)
 {
     int rank, file;
     SDL_Color *square = square_highlights;
-    char mask, *rank_highlights = squares;
+    const char *rank_highlights = squares;
+    char mask;
     for (rank = 0; rank < 8; rank++)
     {
         mask = 1;
@@ -65,13 +63,4 @@ void highlight_squares(Bitboard squares, SDL_Color color)
 void clear_board_highlights()
 {
     memset(square_highlights, 0, sizeof(square_highlights));
-}
-
-/*
- * Private functions
- */
-
-SDL_Color no_highlights(int rank, int file)
-{
-    return CLEAR;
 }

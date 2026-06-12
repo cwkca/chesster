@@ -80,14 +80,14 @@ char is_color(ColoredPiece piece, PieceColor color)
 
 ColoredPiece get_piece_named(char piece)
 {
-    int lut_index = safe_get_lut_index(piece);
+    char lut_index = safe_get_lut_index(piece);
     return lut_index ? PIECE_LOOKUP[lut_index] : NONE;
 }
 
 int load_fen(const char *fen)
 {
     const char *c;
-    int rank, file, skip, i;
+    char rank, file, skip, i;
 
     rank = file = 0;
     for (c = fen; *c; c++)
@@ -140,26 +140,26 @@ int load_fen(const char *fen)
     return 0;
 }
 
-void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, int *squares)
+void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, char *squares)
 {
     ColoredPiece *brd = (ColoredPiece *)board;
-    int sq, *square = squares;
+    char sq, *square = squares;
     for (sq = 0; sq < 64; sq++)
         if (brd[sq] == piece)
             *square++ = sq;
     *square = -1;
 }
 
-void find_file_pawns(ColoredPiece board[8][8], PieceColor color, int file, int *squares)
+void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, char *squares)
 {
-    int rank, *square = squares;
+    char rank, *square = squares;
     for (rank = 0; rank < 8; rank++)
         if (board[rank][file] == (color | PAWN))
             *square++ = (rank << 3) + file;
     *square = -1;
 }
 
-void get_moves(ColoredPiece board[8][8], int square,
+void get_moves(ColoredPiece board[8][8], char square,
                char for_control, Bitboard moves)
 {
     if (square < 0)
@@ -168,14 +168,13 @@ void get_moves(ColoredPiece board[8][8], int square,
     ColoredPiece *squares = (ColoredPiece *)board;
     ColoredPiece piece = squares[square];
     PieceColor color = piece & COLOR_MASK;
-    int rank = square >> 3;
-    int file = square & 7;
+    char rank = square >> 3;
+    char file = square & 7;
 
     CaptureMode capture = for_control ? CAPTURE_ANY : CAPTURE_ENEMY;
     const char *dir;
 
-    int forward;
-    char home_row;
+    char forward, home_row;
 
     switch (piece & PIECE_MASK)
     {
@@ -246,7 +245,7 @@ void get_all_moves(ColoredPiece board[8][8], PieceColor color,
     clear_board(moves);
     ColoredPiece *squares = (ColoredPiece *)board;
 
-    int sq;
+    char sq;
     for (sq = 0; sq < 64; sq++)
         if (is_color(squares[sq], color))
             get_moves(board, sq, for_control, moves);
@@ -259,52 +258,24 @@ void clear_board(Bitboard board)
 
 char board_empty(Bitboard board)
 {
-    int rank;
+    char rank;
     for (rank = 0; rank < 8; rank++)
         if (board[rank])
             return 0;
     return 1;
 }
 
-void set_square(int square, Bitboard board)
+void set_square(char square, Bitboard board)
 {
     board[square >> 3] |= 1 << (square & 7);
 }
 
 void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap)
 {
-    int rank;
+    char rank;
     for (rank = 0; rank < 8; rank++)
         overlap[rank] = a[rank] & b[rank];
 }
-
-/*
-int find_rank_squares(Bitboard board, int rank, int *squares)
-{
-    int file, *square = squares;
-    char mask = 1;
-
-    for (file = 0; file < 8; file++, mask <<= 1)
-        if (board[rank & mask])
-            *square++ = (rank << 3) + file;
-    *square = -1;
-
-    return square - squares;
-}
-
-int find_file_squares(Bitboard board, int file, int *squares)
-{
-    int rank, *square = squares;
-    char mask = 1 << file;
-
-    for (rank = 0; rank < 8; rank++)
-        if (board[rank] & mask)
-            *square++ = (rank << 3) + file;
-    *square = -1;
-
-    return square - squares;
-}
-*/
 
 /*
  * Private functions
