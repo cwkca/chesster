@@ -1,4 +1,4 @@
-/** Game flow logic. */
+/** Game flow and UI logic. */
 
 #include <assert.h>
 #include <string.h>
@@ -10,16 +10,11 @@
 DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
-int src_squares[10];
-int *curr_sq, src_sq, dest_sq;
-Bitboard all_moves;
-int rank_srcs[8][10], file_srcs[8][10], *r_src[8], *f_src[8];
+int src_squares[10], *curr_sq;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
-void select_file(SDL_Keycode key);
-void select_rank(SDL_Keycode key);
-void select_rank_or_file(SDL_Keycode key);
+void select_move(SDL_Keycode key);
 void confirm(SDL_Keycode key);
 void (*key_handler)(SDL_Keycode key) = select_piece;
 
@@ -79,43 +74,21 @@ void show_controlled_squares()
 void collect_moves()
 {
     Bitboard moves;
-    int rank, file, square, mask;
+    int square;
 
-    while (*curr_sq >= 0)
+    while ((square = *curr_sq++))
     {
         clear_board(moves);
-        square = *curr_sq++;
         get_moves(board, square, 0, moves);
-        for (rank = 0; rank < 8; rank++)
-            if (moves[rank])
-            {
-                *r_src[rank]++ = square;
-                all_moves[rank] = all_moves[rank] | moves[rank];
-
-                mask = 1;
-                for (file = 0; file < 8; file++, mask <<= 1)
-                    if (moves[rank] & mask)
-                        *f_src[file]++ = square;
-            }
     }
 }
 
 void select_piece(SDL_Keycode key)
 {
-    clear_board(all_moves);
-    *src_squares = -1;
-    curr_sq = src_squares;
-    src_sq = dest_sq = -1;
-
     clear_board_highlights();
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
-
+    curr_sq = src_squares;
     int i;
-    for (i = 0; i < 8; i++)
-    {
-        r_src[i] = rank_srcs[i];
-        f_src[i] = file_srcs[i];
-    }
 
     if (key == 'b')
     {
@@ -138,83 +111,29 @@ void select_piece(SDL_Keycode key)
     }
 
     collect_moves();
-    for (i = 0; i < 8; i++)
-    {
-        *r_src[i] = -1;
-        *f_src[i] = -1;
-    }
-
-    key_handler = board_empty(all_moves) ? select_piece : select_rank_or_file;
-
-    for (curr_sq = src_squares; *curr_sq >= 0; curr_sq++)
-        square_highlights[*curr_sq] = BLUE;
-    highlight_squares(all_moves, CYAN);
 
     draw->draw_board();
 }
 
-void select_rank_or_file(SDL_Keycode key)
+void select_move(SDL_Keycode key)
 {
     int rank, file, mask, *options;
 
     if (key >= 'a' && key <= 'h')
     {
         file = key - 'a';
-        options = file_srcs[file];
-        if (*options >= 0 && options[1] == -1)
-        {
-            src_sq = *options;
-            mask = 1 << file;
-            for (rank = 0; rank < 8; rank++)
-                if (all_moves[rank] & mask)
-                {
-                    dest_sq = (rank << 3) + file;
-                    break;
-                }
-        }
     }
     else if (key > '0' && key < '9')
     {
         rank = key - '1';
-        options = rank_srcs[rank];
-        if (*options >= 0 && options[1] == -1)
-        {
-            src_sq = *options;
-            mask = 1;
-            for (file = 0; file < 8; file++, mask <<= 1)
-                if (all_moves[rank] & mask)
-                {
-                    dest_sq = (rank << 3) + file;
-                    break;
-                }
-        }
     }
-
-    if (src_sq >= 0)
-    {
-        clear_board_highlights();
-        square_highlights[src_sq] = BLUE;
-        square_highlights[dest_sq] = CYAN;
-        draw->draw_board();
-        key_handler = confirm;
-    }
-    else
-        select_piece(key);
 }
 
 void confirm(SDL_Keycode key)
 {
     if (key == SDLK_RETURN)
     {
-        if (src_sq < 0)
-            start_game();
-        else
-        {
-            ColoredPiece *squares = (ColoredPiece *)board;
-            ColoredPiece piece = squares[src_sq];
-            squares[src_sq] = 0;
-            squares[dest_sq] = piece;
-        }
+        /* if () start_game(); */
     }
 
     key_handler = select_piece;
