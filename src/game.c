@@ -11,6 +11,7 @@ DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
 int src_squares[10], *curr_sq;
+char restart;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -85,10 +86,12 @@ void collect_moves()
 
 void select_piece(SDL_Keycode key)
 {
+    int i;
+
     clear_board_highlights();
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
     curr_sq = src_squares;
-    int i;
+    restart = 0;
 
     if (key == 'b')
     {
@@ -103,8 +106,8 @@ void select_piece(SDL_Keycode key)
         find_pieces(board, get_piece_named(key) & PIECE_MASK, src_squares);
     else if (key == SDLK_BACKSPACE)
     {
-        for (i = 0; i < 64; i++)
-            square_highlights[i] = RED;
+        restart = 1;
+        highlight_squares(FULL_BOARD, RED);
         key_handler = confirm;
         draw->draw_board();
         return;
@@ -133,7 +136,8 @@ void confirm(SDL_Keycode key)
 {
     if (key == SDLK_RETURN)
     {
-        /* if () start_game(); */
+        if (restart)
+            start_game();
     }
 
     key_handler = select_piece;

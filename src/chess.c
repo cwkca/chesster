@@ -8,6 +8,7 @@
 #include "chess.h"
 #include "game.h"
 
+const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 const char *PIECE_NAMES = "_kqrbnp_";
 const char *COLORED_PIECE_NAMES = "_KQRBNP__kqrbnp_";
 
@@ -257,7 +258,7 @@ void clear_board(Bitboard board)
     memset(board, 0, 8);
 }
 
-char board_empty(Bitboard board)
+char board_empty(const Bitboard board)
 {
     int rank;
     for (rank = 0; rank < 8; rank++)
@@ -271,7 +272,7 @@ void set_square(int square, Bitboard board)
     board[square >> 3] |= 1 << (square & 7);
 }
 
-void calc_board_overlap(Bitboard a, Bitboard b, Bitboard overlap)
+void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
 {
     int rank;
     for (rank = 0; rank < 8; rank++)

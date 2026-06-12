@@ -40,11 +40,12 @@ DrawAdapter *init_draw()
                : &TERM_DRAW;
 }
 
-void highlight_squares(Bitboard squares, SDL_Color color)
+void highlight_squares(const Bitboard squares, SDL_Color color)
 {
     int rank, file;
     SDL_Color *square = square_highlights;
-    char mask, *rank_highlights = squares;
+    const char *rank_highlights = squares;
+    char mask;
     for (rank = 0; rank < 8; rank++)
     {
         mask = 1;
