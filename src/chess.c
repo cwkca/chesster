@@ -139,26 +139,25 @@ int load_fen(const char *fen)
     return 0;
 }
 
-void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, int *squares)
+void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, Vector *squares)
 {
-    ColoredPiece *brd = (ColoredPiece *)board;
-    int sq, *square = squares;
-    for (sq = 0; sq < 64; sq++)
-        if (brd[sq] == piece)
-            *square++ = sq;
-    *square = -1;
+    ColoredPiece *board_squares = (ColoredPiece *)board;
+    char square;
+    for (square = 0; square < 64; square++)
+        if (board_squares[square] == piece)
+            add_to_vector(squares, &square);
 }
 
-void find_file_pawns(ColoredPiece board[8][8], PieceColor color, int file, int *squares)
+void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, Vector *squares)
 {
-    int rank, *square = squares;
-    for (rank = 0; rank < 8; rank++)
-        if (board[rank][file] == (color | PAWN))
-            *square++ = (rank << 3) + file;
-    *square = -1;
+    ColoredPiece *board_squares = (ColoredPiece *)board;
+    char square;
+    for (square = file; square < 64; square += 8)
+        if (board_squares[square] == (color | PAWN))
+            add_to_vector(squares, &square);
 }
 
-void get_moves(ColoredPiece board[8][8], int square,
+void get_moves(ColoredPiece board[8][8], char square,
                char for_control, Bitboard moves)
 {
     if (square < 0)
@@ -167,8 +166,7 @@ void get_moves(ColoredPiece board[8][8], int square,
     ColoredPiece *squares = (ColoredPiece *)board;
     ColoredPiece piece = squares[square];
     PieceColor color = piece & COLOR_MASK;
-    int rank = square_rank(square);
-    int file = square_file(square);
+    char rank = square_rank(square), file = square_file(square);
 
     CaptureMode capture = for_control ? CAPTURE_ANY : CAPTURE_ENEMY;
     const char *dir;
@@ -225,7 +223,7 @@ void get_moves(ColoredPiece board[8][8], int square,
         if (!for_control)
         {
             check_move(squares, square, NO_CAPTURE, rank + forward, file, moves);
-            if (home_row)
+            if (home_row && !board[rank + forward][file])
             {
                 check_move(squares, square, NO_CAPTURE,
                            rank + forward + forward, file, moves);
