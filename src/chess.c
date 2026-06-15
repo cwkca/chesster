@@ -251,13 +251,17 @@ void get_all_moves(ColoredPiece board[8][8], PieceColor color,
             get_moves(board, sq, for_control, moves);
 }
 
-void add_board_to_vector(char src_square, Bitboard moves, MoveVector *vector)
+void add_board_to_vector(char src_square, Bitboard move_board, Vector *move_vector)
 {
     char rank, square, mask;
+    Move move;
     for (rank = square = 0; rank < 8; rank++)
         for (mask = 1; mask; mask <<= 1, square++)
-            if (moves[rank] & mask)
-                add_to_vector(vector, (Move){src_square, square});
+            if (move_board[rank] & mask)
+            {
+                move = (Move){src_square, square};
+                add_to_vector(move_vector, &move);
+            }
 }
 
 /*

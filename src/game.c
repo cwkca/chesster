@@ -11,7 +11,7 @@ DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
 int src_squares[10], *curr_sq;
-MoveVector moves, new_moves;
+Vector moves, new_moves;
 char restart;
 
 /* Key handlers */
@@ -32,8 +32,8 @@ int init_game()
         return 1;
 
     init_piece_lookup();
-    init_vector(&moves);
-    init_vector(&new_moves);
+    init_vector(&moves, sizeof(Move));
+    init_vector(&new_moves, sizeof(Move));
 
     return 0;
 }
@@ -165,7 +165,7 @@ void select_move(SDL_Keycode key)
         {
             m = vector_get(&moves, i);
             if (square_file(m->src_square) == file || square_file(m->dest_square) == file)
-                add_to_vector(&new_moves, *m);
+                add_to_vector(&new_moves, m);
         }
     }
     else if (key > '0' && key < '9')
@@ -175,7 +175,7 @@ void select_move(SDL_Keycode key)
         {
             m = vector_get(&moves, i);
             if (square_rank(m->src_square) == rank || square_rank(m->dest_square) == rank)
-                add_to_vector(&new_moves, *m);
+                add_to_vector(&new_moves, m);
         }
     }
 

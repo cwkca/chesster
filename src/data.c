@@ -37,13 +37,26 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
         overlap[rank] = a[rank] & b[rank];
 }
 
-void init_vector(MoveVector *v)
+void init_vector(Vector *v, char elt_size)
 {
     assert(v);
+    assert(elt_size >= 0);
 
-    v->memsize = sizeof(Move) << INITIAL_VECTOR_MAGN;
-    v->moves = malloc(v->memsize);
-    if (!v->moves)
+    if (elt_size == 1)
+        v->elt_magn = 0;
+    else if (elt_size == 2)
+        v->elt_magn = 1;
+    else if (elt_size < 5)
+        v->elt_magn = 2;
+    else
+    {
+        printf("Unsupported vector element size %d\n", elt_size);
+        exit(1);
+    }
+
+    v->memsize = 1 << (v->elt_magn + INITIAL_VECTOR_MAGN);
+    v->data = malloc(v->memsize);
+    if (!v->data)
     {
         printf("Unable to allocate %d bytes of memory\n", v->memsize);
         exit(1);
@@ -53,33 +66,33 @@ void init_vector(MoveVector *v)
     v->capacity = 1 << INITIAL_VECTOR_MAGN;
 }
 
-Move *vector_get(MoveVector *v, char i)
+void *vector_get(Vector *v, char i)
 {
-    assert(v && v->moves);
+    assert(v);
     if (i < 0 || i >= v->size)
     {
         printf("Vector index %d out of bounds (size %d)\n", i, v->size);
         exit(1);
     }
 
-    return v->moves + i;
+    return v->data + (i << v->elt_magn);
 }
 
-void add_to_vector(MoveVector *v, Move move)
+void add_to_vector(Vector *v, void *elt)
 {
     assert(v && v->size <= v->capacity);
 
     if (v->size == v->capacity)
     {
-        int new_memsize = v->memsize + (sizeof(Move) << VECTOR_INC_MAGN);
-        Move *new_moves = realloc(v->moves, new_memsize);
-        if (!new_moves)
+        int new_memsize = v->memsize + (1 << (v->elt_magn + VECTOR_INC_MAGN));
+        void *new_data = realloc(v->data, new_memsize);
+        if (!new_data)
         {
             printf("Unable to allocate %d bytes of memory\n", new_memsize);
             exit(1);
         }
 
-        v->moves = new_moves;
+        v->data = new_data;
         v->memsize = new_memsize;
 
         int new_capacity = v->capacity + (1 << VECTOR_INC_MAGN);
@@ -87,20 +100,21 @@ void add_to_vector(MoveVector *v, Move move)
         v->capacity = new_capacity;
     }
 
-    v->moves[v->size++] = move;
+    memcpy(v->data + (v->size++ << v->elt_magn), elt, 1 << v->elt_magn);
 }
 
-void swap_vectors(MoveVector *a, MoveVector *b)
+void swap_vectors(Vector *a, Vector *b)
 {
-    MoveVector temp = *a;
+    Vector temp = *a;
     *a = *b;
     *b = temp;
 }
 
-void cleanup_vector(MoveVector *v)
+void cleanup_vector(Vector *v)
 {
-    if (!v->moves)
-        return;
-    free(v->moves);
-    v->size = v->capacity = v->memsize = 0;
+    if (v->data)
+    {
+        free(v->data);
+        v->size = v->capacity = v->memsize = 0;
+    }
 }

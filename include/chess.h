@@ -59,6 +59,6 @@ void get_moves(ColoredPiece board[8][8], int square,
 void get_all_moves(ColoredPiece board[8][8], PieceColor color,
                    char for_control, Bitboard moves);
 
-void add_board_to_vector(char src_square, Bitboard moves, MoveVector *vector);
+void add_board_to_vector(char src_square, Bitboard move_board, Vector *move_vector);
 
 #endif /* CHESS_H */

@@ -14,20 +14,21 @@ typedef struct
 
 typedef struct
 {
-    Move *moves;
+    void *data;
     int size, capacity, memsize;
-} MoveVector;
+    char elt_magn;
+} Vector;
 
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
 void set_square(int square, Bitboard board);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
-void init_vector(MoveVector *vector);
-Move *vector_get(MoveVector *vector, char index);
-void add_to_vector(MoveVector *vector, Move move);
-void swap_vectors(MoveVector *a, MoveVector *b);
-void cleanup_vector(MoveVector *v);
+void init_vector(Vector *vector, char elt_size);
+void *vector_get(Vector *vector, char index);
+void add_to_vector(Vector *vector, void *elt);
+void swap_vectors(Vector *a, Vector *b);
+void cleanup_vector(Vector *v);
 
 #define clear_vector(v) ((v)->size = 0)
 
