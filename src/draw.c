@@ -40,6 +40,7 @@ DrawAdapter *init_draw()
                : &TERM_DRAW;
 }
 
+/* Remove? */
 void highlight_squares(const Bitboard squares, SDL_Color color)
 {
     int rank, file;

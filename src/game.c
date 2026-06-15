@@ -11,6 +11,7 @@ DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
 int src_squares[10], *curr_sq;
+MoveVector moves, new_moves;
 char restart;
 
 /* Key handlers */
@@ -22,6 +23,7 @@ void (*key_handler)(SDL_Keycode key) = select_piece;
 /* Other private functions */
 void show_controlled_squares();
 void collect_moves();
+void show_moves();
 
 int init_game()
 {
@@ -30,6 +32,9 @@ int init_game()
         return 1;
 
     init_piece_lookup();
+    init_vector(&moves);
+    init_vector(&new_moves);
+
     return 0;
 }
 
@@ -46,6 +51,8 @@ void handle_key(SDL_Keysym keysym)
 
 void cleanup_game()
 {
+    cleanup_vector(&moves);
+    cleanup_vector(&new_moves);
     if (draw)
         draw->cleanup();
 }
@@ -74,22 +81,40 @@ void show_controlled_squares()
 
 void collect_moves()
 {
-    Bitboard moves;
-    int square;
+    Bitboard moves_board;
+    char square;
 
-    while ((square = *curr_sq++))
+    while ((square = *curr_sq++) >= 0)
     {
-        clear_board(moves);
-        get_moves(board, square, 0, moves);
+        clear_board(moves_board);
+        get_moves(board, square, 0, moves_board);
+        add_board_to_vector(square, moves_board, &moves);
     }
+}
+
+void show_moves()
+{
+    clear_board_highlights();
+
+    char i;
+    Move *m;
+    for (i = 0; i < moves.size; i++)
+    {
+        m = vector_get(&moves, i);
+        square_highlights[m->src_square] = BLUE;
+        square_highlights[m->dest_square] = CYAN;
+    }
+
+    draw->draw_board();
 }
 
 void select_piece(SDL_Keycode key)
 {
-    int i;
+    char i;
 
-    clear_board_highlights();
+    clear_vector(&moves);
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
+    *src_squares = -1;
     curr_sq = src_squares;
     restart = 0;
 
@@ -114,22 +139,53 @@ void select_piece(SDL_Keycode key)
     }
 
     collect_moves();
-
-    draw->draw_board();
+    if (moves.size > 0)
+    {
+        show_moves();
+        key_handler = select_move;
+    }
+    else
+    {
+        clear_board_highlights();
+        draw->draw_board();
+        key_handler = select_piece;
+    }
 }
 
 void select_move(SDL_Keycode key)
 {
-    int rank, file, mask, *options;
+    char rank, file, i;
+    Move *m;
+    clear_vector(&new_moves);
 
     if (key >= 'a' && key <= 'h')
     {
         file = key - 'a';
+        for (i = 0; i < moves.size; i++)
+        {
+            m = vector_get(&moves, i);
+            if (square_file(m->src_square) == file || square_file(m->dest_square) == file)
+                add_to_vector(&new_moves, *m);
+        }
     }
     else if (key > '0' && key < '9')
     {
         rank = key - '1';
+        for (i = 0; i < moves.size; i++)
+        {
+            m = vector_get(&moves, i);
+            if (square_rank(m->src_square) == rank || square_rank(m->dest_square) == rank)
+                add_to_vector(&new_moves, *m);
+        }
     }
+
+    swap_vectors(&moves, &new_moves);
+    show_moves();
+
+    if (moves.size == 0)
+        select_piece(key);
+    else if (moves.size == 1)
+        key_handler = confirm;
 }
 
 void confirm(SDL_Keycode key)
@@ -138,6 +194,15 @@ void confirm(SDL_Keycode key)
     {
         if (restart)
             start_game();
+        else
+        {
+            assert(moves.size == 1);
+            Move *move = vector_get(&moves, 0);
+            ColoredPiece *squares = (ColoredPiece *)board;
+            ColoredPiece piece = squares[move->src_square];
+            squares[move->src_square] = NONE;
+            squares[move->dest_square] = piece;
+        }
     }
 
     key_handler = select_piece;

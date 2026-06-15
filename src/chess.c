@@ -3,12 +3,10 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "chess.h"
 #include "game.h"
 
-const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 const char *PIECE_NAMES = "_kqrbnp_";
 const char *COLORED_PIECE_NAMES = "_KQRBNP__kqrbnp_";
 
@@ -169,8 +167,8 @@ void get_moves(ColoredPiece board[8][8], int square,
     ColoredPiece *squares = (ColoredPiece *)board;
     ColoredPiece piece = squares[square];
     PieceColor color = piece & COLOR_MASK;
-    int rank = square >> 3;
-    int file = square & 7;
+    int rank = square_rank(square);
+    int file = square_file(square);
 
     CaptureMode capture = for_control ? CAPTURE_ANY : CAPTURE_ENEMY;
     const char *dir;
@@ -253,30 +251,13 @@ void get_all_moves(ColoredPiece board[8][8], PieceColor color,
             get_moves(board, sq, for_control, moves);
 }
 
-void clear_board(Bitboard board)
+void add_board_to_vector(char src_square, Bitboard moves, MoveVector *vector)
 {
-    memset(board, 0, 8);
-}
-
-char board_empty(const Bitboard board)
-{
-    int rank;
-    for (rank = 0; rank < 8; rank++)
-        if (board[rank])
-            return 0;
-    return 1;
-}
-
-void set_square(int square, Bitboard board)
-{
-    board[square >> 3] |= 1 << (square & 7);
-}
-
-void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
-{
-    int rank;
-    for (rank = 0; rank < 8; rank++)
-        overlap[rank] = a[rank] & b[rank];
+    char rank, square, mask;
+    for (rank = square = 0; rank < 8; rank++)
+        for (mask = 1; mask; mask <<= 1, square++)
+            if (moves[rank] & mask)
+                add_to_vector(vector, (Move){src_square, square});
 }
 
 /*

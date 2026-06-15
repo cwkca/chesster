@@ -1,6 +1,8 @@
 #ifndef CHESS_H
 #define CHESS_H
 
+#include "data.h"
+
 #define NONE 0
 
 typedef enum
@@ -38,9 +40,6 @@ typedef enum
 #define COLOR_MASK 8
 #define PIECE_MASK 7
 
-typedef char Bitboard[8];
-extern const Bitboard FULL_BOARD;
-
 extern const char *PIECE_NAMES;
 extern const char *COLORED_PIECE_NAMES;
 
@@ -60,9 +59,6 @@ void get_moves(ColoredPiece board[8][8], int square,
 void get_all_moves(ColoredPiece board[8][8], PieceColor color,
                    char for_control, Bitboard moves);
 
-void clear_board(Bitboard board);
-char board_empty(const Bitboard board);
-void set_square(int square, Bitboard board);
-void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
+void add_board_to_vector(char src_square, Bitboard moves, MoveVector *vector);
 
 #endif /* CHESS_H */
