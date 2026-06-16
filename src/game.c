@@ -13,7 +13,7 @@ DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
 Vector moves, new_moves;
-ByteSet src_squares;
+ByteSet src_squares, piece_ranks, piece_files;
 char restart;
 
 /* Key handlers */
@@ -37,6 +37,8 @@ int init_game()
 
     init_piece_lookup();
     init_set(&src_squares, 10);
+    init_set(&piece_ranks, 8);
+    init_set(&piece_files, 8);
     init_vector(&moves, sizeof(Move), 20);
     init_vector(&new_moves, sizeof(Move), 20);
 
@@ -144,6 +146,8 @@ void select_piece(SDL_Keycode key)
     }
 
     collect_moves();
+    clear_set(&src_squares);
+
     if (moves.size > 0)
     {
         show_moves();
@@ -159,35 +163,45 @@ void select_piece(SDL_Keycode key)
 
 void select_move(SDL_Keycode key)
 {
+    char select_by_piece, selection_square;
     char rank, file, i;
     Move *m;
+
     clear_vector(&new_moves);
+    clear_set(&piece_ranks);
+    clear_set(&piece_files);
 
     assert(moves.size > 0);
-    clear_set(&src_squares);
     for (i = 0; i < moves.size; i++)
-        set_add(&src_squares, ((Move *)vector_get(&moves, i))->src_square);
-    char multi_piece = src_squares.size > 1;
+    {
+        m = vector_get(&moves, i);
+        set_add(&piece_ranks, square_rank(m->src_square));
+        set_add(&piece_files, square_file(m->src_square));
+    }
 
     if (key >= 'a' && key <= 'h')
     {
         file = key - 'a';
+        select_by_piece =
+            piece_files.size > 1 && set_contains(&piece_files, file);
         for (i = 0; i < moves.size; i++)
         {
             m = vector_get(&moves, i);
-            if (square_file(m->dest_square) == file ||
-                (multi_piece && square_file(m->src_square) == file))
+            selection_square = select_by_piece ? m->src_square : m->dest_square;
+            if (square_file(selection_square) == file)
                 vector_append(&new_moves, m);
         }
     }
     else if (key > '0' && key < '9')
     {
         rank = key - '1';
+        select_by_piece =
+            piece_ranks.size > 1 && set_contains(&piece_ranks, rank);
         for (i = 0; i < moves.size; i++)
         {
             m = vector_get(&moves, i);
-            if (square_rank(m->dest_square) == rank ||
-                (multi_piece && square_rank(m->src_square) == rank))
+            selection_square = select_by_piece ? m->src_square : m->dest_square;
+            if (square_rank(selection_square) == rank)
                 vector_append(&new_moves, m);
         }
     }
