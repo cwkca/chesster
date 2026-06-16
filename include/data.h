@@ -24,7 +24,7 @@ char board_empty(const Bitboard board);
 void set_square(int square, Bitboard board);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
-void init_vector(Vector *vector, char elt_size);
+void init_vector(Vector *vector, char elt_size, char capacity);
 void *vector_get(Vector *vector, char index);
 void add_to_vector(Vector *vector, void *elt);
 void swap_vectors(Vector *a, Vector *b);

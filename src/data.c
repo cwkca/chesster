@@ -6,7 +6,6 @@
 #include <string.h>
 #include "data.h"
 
-#define INITIAL_VECTOR_MAGN 4
 #define VECTOR_INC_MAGN 3
 
 const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -37,7 +36,7 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
         overlap[rank] = a[rank] & b[rank];
 }
 
-void init_vector(Vector *v, char elt_size)
+void init_vector(Vector *v, char elt_size, char capacity)
 {
     assert(elt_size >= 0);
 
@@ -53,7 +52,7 @@ void init_vector(Vector *v, char elt_size)
         exit(1);
     }
 
-    v->memsize = 1 << (v->elt_magn + INITIAL_VECTOR_MAGN);
+    v->memsize = capacity * (1 << v->elt_magn);
     v->data = malloc(v->memsize);
     if (!v->data)
     {
@@ -62,7 +61,7 @@ void init_vector(Vector *v, char elt_size)
     }
 
     v->size = 0;
-    v->capacity = 1 << INITIAL_VECTOR_MAGN;
+    v->capacity = capacity;
 }
 
 void *vector_get(Vector *v, char i)

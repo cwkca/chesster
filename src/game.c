@@ -36,9 +36,9 @@ int init_game()
         return 1;
 
     init_piece_lookup();
-    init_vector(&src_squares, 1);
-    init_vector(&moves, sizeof(Move));
-    init_vector(&new_moves, sizeof(Move));
+    init_vector(&src_squares, 1, 10);
+    init_vector(&moves, sizeof(Move), 20);
+    init_vector(&new_moves, sizeof(Move), 20);
 
     return 0;
 }
