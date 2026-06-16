@@ -28,6 +28,7 @@ void init_vector(Vector *vector, char elt_size);
 void *vector_get(Vector *vector, char index);
 void add_to_vector(Vector *vector, void *elt);
 void swap_vectors(Vector *a, Vector *b);
+void *choose_random_elt(Vector *v);
 void cleanup_vector(Vector *v);
 
 #define clear_vector(v) ((v)->size = 0)

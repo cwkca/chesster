@@ -139,6 +139,15 @@ int load_fen(const char *fen)
     return 0;
 }
 
+void find_all_pieces(ColoredPiece board[8][8], PieceColor color, Vector *squares)
+{
+    ColoredPiece *board_squares = (ColoredPiece *)board;
+    char square;
+    for (square = 0; square < 64; square++)
+        if ((board_squares[square] & COLOR_MASK) == color)
+            add_to_vector(squares, &square);
+}
+
 void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, Vector *squares)
 {
     ColoredPiece *board_squares = (ColoredPiece *)board;

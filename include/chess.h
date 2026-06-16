@@ -52,6 +52,7 @@ ColoredPiece get_piece_named(char piece);
 
 int load_fen(const char *fen);
 
+void find_all_pieces(ColoredPiece board[8][8], PieceColor color, Vector *squares);
 void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, Vector *squares);
 void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, Vector *squares);
 void get_moves(ColoredPiece board[8][8], char square,

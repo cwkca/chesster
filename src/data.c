@@ -39,7 +39,6 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
 
 void init_vector(Vector *v, char elt_size)
 {
-    assert(v);
     assert(elt_size >= 0);
 
     if (elt_size == 1)
@@ -68,7 +67,6 @@ void init_vector(Vector *v, char elt_size)
 
 void *vector_get(Vector *v, char i)
 {
-    assert(v);
     if (i < 0 || i >= v->size)
     {
         printf("Vector index %d out of bounds (size %d)\n", i, v->size);
@@ -80,7 +78,7 @@ void *vector_get(Vector *v, char i)
 
 void add_to_vector(Vector *v, void *elt)
 {
-    assert(v && v->size <= v->capacity);
+    assert(v->size <= v->capacity);
 
     if (v->size == v->capacity)
     {
@@ -108,6 +106,11 @@ void swap_vectors(Vector *a, Vector *b)
     Vector temp = *a;
     *a = *b;
     *b = temp;
+}
+
+void *choose_random_elt(Vector *v)
+{
+    return v->size ? vector_get(v, rand() % v->size) : NULL;
 }
 
 void cleanup_vector(Vector *v)
