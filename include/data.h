@@ -19,6 +19,12 @@ typedef struct
     char elt_magn;
 } Vector;
 
+typedef struct
+{
+    char *bytes;
+    int size, capacity;
+} ByteSet;
+
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
 void set_square(int square, Bitboard board);
@@ -26,11 +32,16 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
 void init_vector(Vector *vector, char elt_size, char capacity);
 void *vector_get(Vector *vector, char index);
-void add_to_vector(Vector *vector, void *elt);
+void vector_append(Vector *vector, void *elt);
 void swap_vectors(Vector *a, Vector *b);
 void *choose_random_elt(Vector *v);
 void cleanup_vector(Vector *v);
-
 #define clear_vector(v) ((v)->size = 0)
+
+void init_set(ByteSet *set, char capacity);
+void set_add(ByteSet *set, char elt);
+char set_contains(ByteSet *set, char elt);
+void cleanup_set(ByteSet *set);
+#define clear_set(s) ((s)->size = 0)
 
 #endif // DATA_H

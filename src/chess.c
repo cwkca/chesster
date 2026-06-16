@@ -139,31 +139,31 @@ int load_fen(const char *fen)
     return 0;
 }
 
-void find_all_pieces(ColoredPiece board[8][8], PieceColor color, Vector *squares)
+void find_all_pieces(ColoredPiece board[8][8], PieceColor color, ByteSet *squares)
 {
     ColoredPiece *board_squares = (ColoredPiece *)board;
     char square;
     for (square = 0; square < 64; square++)
         if ((board_squares[square] & COLOR_MASK) == color)
-            add_to_vector(squares, &square);
+            set_add(squares, square);
 }
 
-void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, Vector *squares)
+void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, ByteSet *squares)
 {
     ColoredPiece *board_squares = (ColoredPiece *)board;
     char square;
     for (square = 0; square < 64; square++)
         if (board_squares[square] == piece)
-            add_to_vector(squares, &square);
+            set_add(squares, square);
 }
 
-void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, Vector *squares)
+void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, ByteSet *squares)
 {
     ColoredPiece *board_squares = (ColoredPiece *)board;
     char square;
     for (square = file; square < 64; square += 8)
         if (board_squares[square] == (color | PAWN))
-            add_to_vector(squares, &square);
+            set_add(squares, square);
 }
 
 void get_moves(ColoredPiece board[8][8], char square,
@@ -267,7 +267,7 @@ void add_board_to_vector(char src_square, Bitboard move_board, Vector *move_vect
             if (move_board[rank] & mask)
             {
                 move = (Move){src_square, square};
-                add_to_vector(move_vector, &move);
+                vector_append(move_vector, &move);
             }
 }
 

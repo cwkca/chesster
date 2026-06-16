@@ -12,7 +12,8 @@ const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[8][8];
 
-Vector src_squares, moves, new_moves;
+Vector moves, new_moves;
+ByteSet src_squares;
 char restart;
 
 /* Key handlers */
@@ -26,7 +27,6 @@ void show_controlled_squares();
 void collect_moves();
 void show_moves();
 void do_move(ColoredPiece board[8][8], Move *move);
-void keep_move(Move *m);
 void move_black();
 
 int init_game()
@@ -36,7 +36,7 @@ int init_game()
         return 1;
 
     init_piece_lookup();
-    init_vector(&src_squares, 1, 10);
+    init_set(&src_squares, 10);
     init_vector(&moves, sizeof(Move), 20);
     init_vector(&new_moves, sizeof(Move), 20);
 
@@ -88,14 +88,14 @@ void show_controlled_squares()
 void collect_moves()
 {
     Bitboard moves_board;
-    char i, *square;
+    char i, square;
 
     for (i = 0; i < src_squares.size; i++)
     {
-        square = vector_get(&src_squares, i);
+        square = src_squares.bytes[i];
         clear_board(moves_board);
-        get_moves(board, *square, 0, moves_board);
-        add_board_to_vector(*square, moves_board, &moves);
+        get_moves(board, square, 0, moves_board);
+        add_board_to_vector(square, moves_board, &moves);
     }
 }
 
@@ -119,7 +119,7 @@ void select_piece(SDL_Keycode key)
 {
     char i;
 
-    clear_vector(&src_squares);
+    clear_set(&src_squares);
     clear_vector(&moves);
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
     restart = 0;
@@ -165,7 +165,7 @@ void select_move(SDL_Keycode key)
 
     assert(src_squares.size > 0);
     char multi_piece = src_squares.size > 1;
-    clear_vector(&src_squares);
+    clear_set(&src_squares);
 
     if (key >= 'a' && key <= 'h')
     {
@@ -175,7 +175,10 @@ void select_move(SDL_Keycode key)
             m = vector_get(&moves, i);
             if (square_file(m->dest_square) == file ||
                 (multi_piece && square_file(m->src_square) == file))
-                keep_move(m);
+            {
+                vector_append(&new_moves, m);
+                set_add(&src_squares, m->src_square);
+            }
         }
     }
     else if (key > '0' && key < '9')
@@ -186,7 +189,10 @@ void select_move(SDL_Keycode key)
             m = vector_get(&moves, i);
             if (square_rank(m->dest_square) == rank ||
                 (multi_piece && square_rank(m->src_square) == rank))
-                keep_move(m);
+            {
+                vector_append(&new_moves, m);
+                set_add(&src_squares, m->src_square);
+            }
         }
     }
     else if (key == SDLK_RETURN && moves.size == 1)
@@ -226,18 +232,6 @@ void do_move(ColoredPiece board[8][8], Move *move)
     ColoredPiece piece = squares[move->src_square];
     squares[move->src_square] = NONE;
     squares[move->dest_square] = piece;
-}
-
-void keep_move(Move *m)
-{
-    add_to_vector(&new_moves, m);
-
-    int i;
-    for (i = 0; i < src_squares.size; i++)
-        if (*(char *)vector_get(&src_squares, i) == m->src_square)
-            /* Source square already recorded */
-            return;
-    add_to_vector(&src_squares, &m->src_square);
 }
 
 void move_black()
