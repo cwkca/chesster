@@ -163,9 +163,11 @@ void select_move(SDL_Keycode key)
     Move *m;
     clear_vector(&new_moves);
 
-    assert(src_squares.size > 0);
-    char multi_piece = src_squares.size > 1;
+    assert(moves.size > 0);
     clear_set(&src_squares);
+    for (i = 0; i < moves.size; i++)
+        set_add(&src_squares, ((Move *)vector_get(&moves, i))->src_square);
+    char multi_piece = src_squares.size > 1;
 
     if (key >= 'a' && key <= 'h')
     {
@@ -175,10 +177,7 @@ void select_move(SDL_Keycode key)
             m = vector_get(&moves, i);
             if (square_file(m->dest_square) == file ||
                 (multi_piece && square_file(m->src_square) == file))
-            {
                 vector_append(&new_moves, m);
-                set_add(&src_squares, m->src_square);
-            }
         }
     }
     else if (key > '0' && key < '9')
@@ -189,10 +188,7 @@ void select_move(SDL_Keycode key)
             m = vector_get(&moves, i);
             if (square_rank(m->dest_square) == rank ||
                 (multi_piece && square_rank(m->src_square) == rank))
-            {
                 vector_append(&new_moves, m);
-                set_add(&src_squares, m->src_square);
-            }
         }
     }
     else if (key == SDLK_RETURN && moves.size == 1)
