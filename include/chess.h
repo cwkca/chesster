@@ -45,20 +45,19 @@ extern const char *COLORED_PIECE_NAMES;
 
 extern const char *STARTING_FEN;
 
-void init_piece_lookup();
+void init_chess();
 
 char is_color(ColoredPiece piece, PieceColor color);
 ColoredPiece get_piece_named(char piece);
 
 int load_fen(const char *fen);
 
-void find_all_pieces(ColoredPiece board[8][8], PieceColor color, ByteSet *squares);
-void find_pieces(ColoredPiece board[8][8], ColoredPiece piece, ByteSet *squares);
-void find_file_pawns(ColoredPiece board[8][8], PieceColor color, char file, ByteSet *squares);
-void get_moves(ColoredPiece board[8][8], char square,
-               char for_control, Bitboard moves);
-void get_all_moves(ColoredPiece board[8][8], PieceColor color,
-                   char for_control, Bitboard moves);
+void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares);
+void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares);
+void find_file_pawns(ColoredPiece *board, PieceColor color, char file, ByteSet *squares);
+void get_moves(ColoredPiece *board, char square, char for_control, Bitboard moves);
+void get_all_moves(ColoredPiece *board, PieceColor color, char for_control, Bitboard moves);
+char king_in_check(ColoredPiece *board, PieceColor color);
 
 void add_board_to_vector(char src_square, Bitboard move_board, Vector *move_vector);
 

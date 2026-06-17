@@ -4,7 +4,7 @@
 #include <SDL.h>
 #include "chess.h"
 
-extern ColoredPiece board[8][8];
+extern ColoredPiece board[64];
 
 int init_game();
 int start_game();

@@ -10,7 +10,7 @@
 
 const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
-ColoredPiece board[8][8];
+ColoredPiece board[64];
 
 Vector moves, new_moves;
 ByteSet src_squares, piece_ranks, piece_files;
@@ -26,7 +26,7 @@ void (*key_handler)(SDL_Keycode key) = select_piece;
 void show_controlled_squares();
 void collect_moves();
 void show_moves();
-void do_move(ColoredPiece board[8][8], Move *move);
+void do_move(ColoredPiece *board, Move *move);
 void move_black();
 
 int init_game()
@@ -35,7 +35,7 @@ int init_game()
     if (!draw)
         return 1;
 
-    init_piece_lookup();
+    init_chess();
     init_set(&src_squares, 10);
     init_set(&piece_ranks, 8);
     init_set(&piece_files, 8);
@@ -245,12 +245,11 @@ void confirm(SDL_Keycode key)
     draw->draw_board();
 }
 
-void do_move(ColoredPiece board[8][8], Move *move)
+void do_move(ColoredPiece *board, Move *move)
 {
-    ColoredPiece *squares = (ColoredPiece *)board;
-    ColoredPiece piece = squares[move->src_square];
-    squares[move->src_square] = NONE;
-    squares[move->dest_square] = piece;
+    ColoredPiece piece = board[move->src_square];
+    board[move->src_square] = NONE;
+    board[move->dest_square] = piece;
 }
 
 void move_black()
