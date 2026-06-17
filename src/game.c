@@ -14,7 +14,7 @@ ColoredPiece board[8][8];
 
 Vector moves, new_moves;
 ByteSet src_squares, piece_ranks, piece_files;
-char restart;
+char restart, show_control;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -48,6 +48,7 @@ int init_game()
 int start_game()
 {
     assert(load_fen(STARTING_FEN) == 0);
+    show_control = 0;
     return draw->draw_screen();
 }
 
@@ -120,13 +121,29 @@ void show_moves()
 void select_piece(SDL_Keycode key)
 {
     char i;
-
     clear_set(&src_squares);
     clear_vector(&moves);
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
-    restart = 0;
+    key_handler = select_piece;
 
-    if (key == 'b')
+    if (key == SDLK_SPACE && !show_control)
+    {
+        show_control = 1;
+        show_controlled_squares();
+        return;
+    }
+    else if (key == SDLK_BACKSPACE)
+    {
+        restart = 1;
+        key_handler = confirm;
+
+        show_control = 0;
+        highlight_squares(FULL_BOARD, RED);
+        draw->draw_board();
+
+        return;
+    }
+    else if (key == 'b')
     {
         /* Select both bishops and pawns */
         find_pieces(board, WHITE_BISHOP, &src_squares);
@@ -136,17 +153,10 @@ void select_piece(SDL_Keycode key)
         find_file_pawns(board, P_WHITE, key - 'a', &src_squares);
     else if (is_piece)
         find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
-    else if (key == SDLK_BACKSPACE)
-    {
-        restart = 1;
-        highlight_squares(FULL_BOARD, RED);
-        key_handler = confirm;
-        draw->draw_board();
-        return;
-    }
 
     collect_moves();
     clear_set(&src_squares);
+    restart = show_control = 0;
 
     if (moves.size > 0)
     {
@@ -157,7 +167,6 @@ void select_piece(SDL_Keycode key)
     {
         clear_board_highlights();
         draw->draw_board();
-        key_handler = select_piece;
     }
 }
 
