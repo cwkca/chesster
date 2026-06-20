@@ -12,19 +12,31 @@ const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[64];
 
-Vector piece_moves, sel_moves;
-ByteSet src_squares, piece_ranks, piece_files;
-char restart, show_control;
+Vector moves, new_moves;
+ByteSet src_squares;
+
+#define MOVE_LEN 10
+#define RESTART_KEY SDLK_BACKSPACE
+#define SHOW_CTRL SDLK_SPACE
+char move_str[MOVE_LEN], *move_end;
+char filter_rank, filter_file, dest_square;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
 void select_move(SDL_Keycode key);
-void confirm(SDL_Keycode key);
 void (*key_handler)(SDL_Keycode key) = select_piece;
+
+/* Move filtering */
+char get_dest_square();
+void filter_moves(char (*filter)(Move *));
+char by_capture(Move *m);
+char by_rank(Move *m);
+char by_file(Move *m);
+char by_dest(Move *m);
 
 /* Other private functions */
 void show_controlled_squares();
-void show_moves(Vector *moves);
+void show_moves();
 void do_move(ColoredPiece *board, Move *move);
 void move_black();
 
@@ -36,10 +48,8 @@ int init_game()
 
     init_chess();
     init_set(&src_squares, 10);
-    init_set(&piece_ranks, 8);
-    init_set(&piece_files, 8);
-    init_vector(&piece_moves, sizeof(Move), 20);
-    init_vector(&sel_moves, sizeof(Move), 10);
+    init_vector(&moves, sizeof(Move), 20);
+    init_vector(&new_moves, sizeof(Move), 10);
 
     return 0;
 }
@@ -47,7 +57,8 @@ int init_game()
 int start_game()
 {
     assert(load_fen(STARTING_FEN) == 0);
-    show_control = 0;
+    *move_str = 0;
+    move_end = move_str;
     return draw->draw_screen();
 }
 
@@ -59,8 +70,8 @@ void handle_key(SDL_Keysym keysym)
 
 void cleanup_game()
 {
-    cleanup_vector(&piece_moves);
-    cleanup_vector(&sel_moves);
+    cleanup_vector(&moves);
+    cleanup_vector(&new_moves);
     if (draw)
         draw->cleanup();
 }
@@ -68,6 +79,144 @@ void cleanup_game()
 /*
  * Private functions
  */
+
+void select_piece(SDL_Keycode key)
+{
+    char i;
+    char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
+    clear_set(&src_squares);
+    clear_vector(&moves);
+
+    assert(key_handler == select_piece);
+    move_end = move_str;
+    *(move_end++) = key;
+
+    if (key == SHOW_CTRL)
+    {
+        show_controlled_squares();
+        return;
+    }
+    else if (key == RESTART_KEY)
+    {
+        highlight_squares(FULL_BOARD, RED);
+        draw->draw_board();
+        key_handler = select_move;
+        return;
+    }
+    else if (key == 'b')
+    {
+        /* Select both bishops and pawns */
+        find_pieces(board, WHITE_BISHOP, &src_squares);
+        find_file_pawns(board, P_WHITE, 1, &src_squares);
+    }
+    else if (is_file(key))
+        find_file_pawns(board, P_WHITE, key - 'a', &src_squares);
+    else if (is_piece)
+        find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
+
+    get_moves_from(board, &src_squares, &moves);
+    clear_set(&src_squares);
+
+    if (moves.size > 0)
+    {
+        show_moves();
+        key_handler = select_move;
+    }
+    else
+    {
+        clear_board_highlights();
+        draw->draw_board();
+    }
+}
+
+void select_move(SDL_Keycode key)
+{
+    if (key == SDLK_RETURN)
+    {
+        if (*move_str == RESTART_KEY)
+            start_game();
+        else if (moves.size == 1)
+        {
+            do_move(board, vector_get(&moves, 0));
+            move_black();
+        }
+    }
+
+    clear_vector(&new_moves);
+
+    if (move_end - move_str < MOVE_LEN && is_move_char(key))
+        *(move_end++) = key;
+
+    if (key == 'x')
+        filter_moves(by_capture);
+    else if (is_file(key))
+    {
+        filter_file = key - 'a';
+        filter_moves(by_file);
+    }
+    else if (is_rank(key))
+    {
+        filter_rank = key - '1';
+        dest_square = get_dest_square();
+
+        if (dest_square >= 0)
+            filter_moves(by_dest);
+        else
+            filter_moves(by_rank);
+    }
+
+    swap_vectors(&moves, &new_moves);
+
+    if (!moves.size)
+        key_handler = select_piece;
+
+    show_moves();
+}
+
+void filter_moves(char (*filter)(Move *))
+{
+    char i;
+    Move *m;
+
+    for (i = 0; i < moves.size; i++)
+    {
+        m = vector_get(&moves, i);
+        if (filter(m))
+            vector_append(&new_moves, m);
+    }
+}
+
+char by_capture(Move *m)
+{
+    return board[m->dest_square];
+}
+
+char by_rank(Move *m)
+{
+    return square_rank(m->src_square) == filter_rank || square_rank(m->dest_square) == filter_rank;
+}
+
+char by_file(Move *m)
+{
+    return square_file(m->src_square) == filter_file || square_file(m->dest_square) == filter_file;
+}
+
+char by_dest(Move *m)
+{
+    return m->dest_square == dest_square;
+}
+
+char get_dest_square()
+{
+    char *dest_search = move_end - 2;
+    if (dest_search < move_str)
+        return -1;
+
+    if (is_file(dest_search[0]) && is_rank(dest_search[1]))
+        return ((dest_search[1] - '1') << 3) + (dest_search[0] - 'a');
+
+    return -1;
+}
 
 void show_controlled_squares()
 {
@@ -87,145 +236,19 @@ void show_controlled_squares()
     draw->draw_board();
 }
 
-void show_moves(Vector *moves)
+void show_moves()
 {
     clear_board_highlights();
 
     char i;
     Move *m;
-    for (i = 0; i < moves->size; i++)
+    for (i = 0; i < moves.size; i++)
     {
-        m = vector_get(moves, i);
+        m = vector_get(&moves, i);
         square_highlights[m->src_square] = BLUE;
         square_highlights[m->dest_square] = CYAN;
     }
 
-    draw->draw_board();
-}
-
-void select_piece(SDL_Keycode key)
-{
-    char i;
-    clear_set(&src_squares);
-    clear_vector(&piece_moves);
-    char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
-    key_handler = select_piece;
-
-    if (key == SDLK_SPACE && !show_control)
-    {
-        show_control = 1;
-        show_controlled_squares();
-        return;
-    }
-    else if (key == SDLK_BACKSPACE)
-    {
-        restart = 1;
-        key_handler = confirm;
-
-        show_control = 0;
-        highlight_squares(FULL_BOARD, RED);
-        draw->draw_board();
-
-        return;
-    }
-    else if (key == 'b')
-    {
-        /* Select both bishops and pawns */
-        find_pieces(board, WHITE_BISHOP, &src_squares);
-        find_file_pawns(board, P_WHITE, 1, &src_squares);
-    }
-    else if (key >= 'a' && key <= 'h')
-        find_file_pawns(board, P_WHITE, key - 'a', &src_squares);
-    else if (is_piece)
-        find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
-
-    get_moves_from(board, &src_squares, &piece_moves);
-    clear_set(&src_squares);
-    restart = show_control = 0;
-
-    if (piece_moves.size > 0)
-    {
-        show_moves(&piece_moves);
-        key_handler = select_move;
-    }
-    else
-    {
-        clear_board_highlights();
-        draw->draw_board();
-    }
-}
-
-void select_move(SDL_Keycode key)
-{
-    char select_by_piece, selection_square;
-    char rank, file, i;
-    Move *m;
-
-    clear_vector(&sel_moves);
-    clear_set(&piece_ranks);
-    clear_set(&piece_files);
-
-    assert(piece_moves.size > 0);
-    for (i = 0; i < piece_moves.size; i++)
-    {
-        m = vector_get(&piece_moves, i);
-        set_add(&piece_ranks, square_rank(m->src_square));
-        set_add(&piece_files, square_file(m->src_square));
-    }
-
-    if (key >= 'a' && key <= 'h')
-    {
-        file = key - 'a';
-        select_by_piece =
-            piece_files.size > 1 && set_contains(&piece_files, file);
-        for (i = 0; i < piece_moves.size; i++)
-        {
-            m = vector_get(&piece_moves, i);
-            selection_square = select_by_piece ? m->src_square : m->dest_square;
-            if (square_file(selection_square) == file)
-                vector_append(&sel_moves, m);
-        }
-    }
-    else if (key > '0' && key < '9')
-    {
-        rank = key - '1';
-        select_by_piece =
-            piece_ranks.size > 1 && set_contains(&piece_ranks, rank);
-        for (i = 0; i < piece_moves.size; i++)
-        {
-            m = vector_get(&piece_moves, i);
-            selection_square = select_by_piece ? m->src_square : m->dest_square;
-            if (square_rank(selection_square) == rank)
-                vector_append(&sel_moves, m);
-        }
-    }
-    else if (key == SDLK_RETURN && sel_moves.size == 1)
-        confirm(key);
-
-    show_moves(&sel_moves);
-
-    if (sel_moves.size == 0)
-        select_piece(key);
-    else if (sel_moves.size == 1)
-        key_handler = confirm;
-}
-
-void confirm(SDL_Keycode key)
-{
-    if (key == SDLK_RETURN)
-    {
-        if (restart)
-            start_game();
-        else
-        {
-            assert(sel_moves.size == 1);
-            do_move(board, vector_get(&sel_moves, 0));
-            move_black();
-        }
-    }
-
-    key_handler = select_piece;
-    clear_board_highlights();
     draw->draw_board();
 }
 
@@ -246,10 +269,10 @@ void move_black()
     find_all_pieces(board, P_BLACK, &src_squares);
     assert(src_squares.size);
 
-    clear_vector(&piece_moves);
-    get_moves_from(board, &src_squares, &piece_moves);
-    if (piece_moves.size)
-        do_move(board, choose_random_elt(&piece_moves));
+    clear_vector(&moves);
+    get_moves_from(board, &src_squares, &moves);
+    if (moves.size)
+        do_move(board, choose_random_elt(&moves));
     else
     {
         printf("You win!\n");

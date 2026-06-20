@@ -47,6 +47,10 @@ extern const char *STARTING_FEN;
 
 void init_chess();
 
+#define is_rank(x) ((x) > '0' && (x) < '9')
+#define is_file(x) ((x) >= 'a' && (x) <= 'h')
+#define is_move_char(x) (is_rank(x) || is_file(x) || (x) == 'x')
+
 char is_color(ColoredPiece piece, PieceColor color);
 ColoredPiece get_piece_named(char piece);
 

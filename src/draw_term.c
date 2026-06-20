@@ -32,15 +32,15 @@ int draw_board_term()
         printf("│");
         for (file = 0; file < 8; file += 2)
         {
-            plain_piece = TERM_PIECES[board[rank][file]];
-            invert_piece(board[rank][file + 1]);
+            plain_piece = TERM_PIECES[board[(rank << 3) + file]];
+            invert_piece(board[(rank << 3) + file + 1]);
             printf(" %s █%s█", plain_piece, inverted_piece);
         }
         printf("▌\n▗▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▄▄▄▀▀▀▘\n▐");
         for (file = 0; file < 8; file += 2)
         {
-            invert_piece(board[rank + 1][file]);
-            plain_piece = TERM_PIECES[board[rank + 1][file + 1]];
+            invert_piece(board[((rank + 1) << 3) + file]);
+            plain_piece = TERM_PIECES[board[((rank + 1) << 3) + file + 1]];
             printf("█%s█ %s ", inverted_piece, plain_piece);
         }
         printf("│\n");

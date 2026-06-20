@@ -105,7 +105,7 @@ void draw_pieces()
     for (rank = 0; rank < 8; rank++)
         for (file = 0; file < 8; file++)
         {
-            ColoredPiece piece = board[rank][file];
+            ColoredPiece piece = board[(rank << 3) + file];
             if (piece)
                 draw_piece(piece, file, rank);
         }
