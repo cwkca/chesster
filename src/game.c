@@ -12,7 +12,7 @@ const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[64];
 
-Vector moves, new_moves;
+Vector piece_moves, sel_moves;
 ByteSet src_squares, piece_ranks, piece_files;
 char restart, show_control;
 
@@ -24,8 +24,7 @@ void (*key_handler)(SDL_Keycode key) = select_piece;
 
 /* Other private functions */
 void show_controlled_squares();
-void collect_moves();
-void show_moves();
+void show_moves(Vector *moves);
 void do_move(ColoredPiece *board, Move *move);
 void move_black();
 
@@ -39,8 +38,8 @@ int init_game()
     init_set(&src_squares, 10);
     init_set(&piece_ranks, 8);
     init_set(&piece_files, 8);
-    init_vector(&moves, sizeof(Move), 20);
-    init_vector(&new_moves, sizeof(Move), 20);
+    init_vector(&piece_moves, sizeof(Move), 20);
+    init_vector(&sel_moves, sizeof(Move), 10);
 
     return 0;
 }
@@ -60,8 +59,8 @@ void handle_key(SDL_Keysym keysym)
 
 void cleanup_game()
 {
-    cleanup_vector(&moves);
-    cleanup_vector(&new_moves);
+    cleanup_vector(&piece_moves);
+    cleanup_vector(&sel_moves);
     if (draw)
         draw->cleanup();
 }
@@ -88,29 +87,15 @@ void show_controlled_squares()
     draw->draw_board();
 }
 
-void collect_moves()
-{
-    Bitboard moves_board;
-    char i, square;
-
-    for (i = 0; i < src_squares.size; i++)
-    {
-        square = src_squares.bytes[i];
-        clear_board(moves_board);
-        get_moves(board, square, 0, moves_board);
-        add_board_to_vector(square, moves_board, &moves);
-    }
-}
-
-void show_moves()
+void show_moves(Vector *moves)
 {
     clear_board_highlights();
 
     char i;
     Move *m;
-    for (i = 0; i < moves.size; i++)
+    for (i = 0; i < moves->size; i++)
     {
-        m = vector_get(&moves, i);
+        m = vector_get(moves, i);
         square_highlights[m->src_square] = BLUE;
         square_highlights[m->dest_square] = CYAN;
     }
@@ -122,7 +107,7 @@ void select_piece(SDL_Keycode key)
 {
     char i;
     clear_set(&src_squares);
-    clear_vector(&moves);
+    clear_vector(&piece_moves);
     char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
     key_handler = select_piece;
 
@@ -154,13 +139,13 @@ void select_piece(SDL_Keycode key)
     else if (is_piece)
         find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
 
-    collect_moves();
+    get_moves_from(board, &src_squares, &piece_moves);
     clear_set(&src_squares);
     restart = show_control = 0;
 
-    if (moves.size > 0)
+    if (piece_moves.size > 0)
     {
-        show_moves();
+        show_moves(&piece_moves);
         key_handler = select_move;
     }
     else
@@ -176,14 +161,14 @@ void select_move(SDL_Keycode key)
     char rank, file, i;
     Move *m;
 
-    clear_vector(&new_moves);
+    clear_vector(&sel_moves);
     clear_set(&piece_ranks);
     clear_set(&piece_files);
 
-    assert(moves.size > 0);
-    for (i = 0; i < moves.size; i++)
+    assert(piece_moves.size > 0);
+    for (i = 0; i < piece_moves.size; i++)
     {
-        m = vector_get(&moves, i);
+        m = vector_get(&piece_moves, i);
         set_add(&piece_ranks, square_rank(m->src_square));
         set_add(&piece_files, square_file(m->src_square));
     }
@@ -193,12 +178,12 @@ void select_move(SDL_Keycode key)
         file = key - 'a';
         select_by_piece =
             piece_files.size > 1 && set_contains(&piece_files, file);
-        for (i = 0; i < moves.size; i++)
+        for (i = 0; i < piece_moves.size; i++)
         {
-            m = vector_get(&moves, i);
+            m = vector_get(&piece_moves, i);
             selection_square = select_by_piece ? m->src_square : m->dest_square;
             if (square_file(selection_square) == file)
-                vector_append(&new_moves, m);
+                vector_append(&sel_moves, m);
         }
     }
     else if (key > '0' && key < '9')
@@ -206,23 +191,22 @@ void select_move(SDL_Keycode key)
         rank = key - '1';
         select_by_piece =
             piece_ranks.size > 1 && set_contains(&piece_ranks, rank);
-        for (i = 0; i < moves.size; i++)
+        for (i = 0; i < piece_moves.size; i++)
         {
-            m = vector_get(&moves, i);
+            m = vector_get(&piece_moves, i);
             selection_square = select_by_piece ? m->src_square : m->dest_square;
             if (square_rank(selection_square) == rank)
-                vector_append(&new_moves, m);
+                vector_append(&sel_moves, m);
         }
     }
-    else if (key == SDLK_RETURN && moves.size == 1)
+    else if (key == SDLK_RETURN && sel_moves.size == 1)
         confirm(key);
 
-    swap_vectors(&moves, &new_moves);
-    show_moves();
+    show_moves(&sel_moves);
 
-    if (moves.size == 0)
+    if (sel_moves.size == 0)
         select_piece(key);
-    else if (moves.size == 1)
+    else if (sel_moves.size == 1)
         key_handler = confirm;
 }
 
@@ -234,8 +218,8 @@ void confirm(SDL_Keycode key)
             start_game();
         else
         {
-            assert(moves.size == 1);
-            do_move(board, vector_get(&moves, 0));
+            assert(sel_moves.size == 1);
+            do_move(board, vector_get(&sel_moves, 0));
             move_black();
         }
     }
@@ -262,10 +246,10 @@ void move_black()
     find_all_pieces(board, P_BLACK, &src_squares);
     assert(src_squares.size);
 
-    clear_vector(&moves);
-    collect_moves();
-    if (moves.size)
-        do_move(board, choose_random_elt(&moves));
+    clear_vector(&piece_moves);
+    get_moves_from(board, &src_squares, &piece_moves);
+    if (piece_moves.size)
+        do_move(board, choose_random_elt(&piece_moves));
     else
     {
         printf("You win!\n");

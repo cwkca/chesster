@@ -55,7 +55,9 @@ int load_fen(const char *fen);
 void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares);
 void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares);
 void find_file_pawns(ColoredPiece *board, PieceColor color, char file, ByteSet *squares);
+
 void get_moves(ColoredPiece *board, char square, char for_control, Bitboard moves);
+void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
 void get_all_moves(ColoredPiece *board, PieceColor color, char for_control, Bitboard moves);
 char king_in_check(ColoredPiece *board, PieceColor color);
 

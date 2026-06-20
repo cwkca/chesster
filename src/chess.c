@@ -239,6 +239,20 @@ void get_moves(ColoredPiece *board, char square,
     }
 }
 
+void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves)
+{
+    Bitboard bit_moves;
+    char i, square;
+
+    for (i = 0; i < src_squares->size; i++)
+    {
+        square = src_squares->bytes[i];
+        clear_board(bit_moves);
+        get_moves(board, square, 0, bit_moves);
+        add_board_to_vector(square, bit_moves, moves);
+    }
+}
+
 void get_all_moves(ColoredPiece *board, PieceColor color, char for_control, Bitboard moves)
 {
     clear_board(moves);
