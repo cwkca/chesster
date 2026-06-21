@@ -44,21 +44,12 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap)
  * Vectors
  */
 
-void init_vector(Vector *v, char elt_size, char capacity)
+void init_vector(Vector *v, int elt_size, char capacity)
 {
     assert(elt_size >= 0 && capacity > 0);
 
-    if (elt_size == 1)
-        v->elt_magn = 0;
-    else if (elt_size == 2)
-        v->elt_magn = 1;
-    else if (elt_size < 5)
-        v->elt_magn = 2;
-    else
-    {
-        printf("Unsupported vector element size %d\n", elt_size);
-        exit(1);
-    }
+    for (v->elt_magn = 0, elt_size--; elt_size; v->elt_magn++)
+        elt_size >>= 1;
 
     v->memsize = capacity * (1 << v->elt_magn);
     v->data = malloc(v->memsize);

@@ -11,15 +11,16 @@
 const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[64];
+const int BOARD_BYTES = sizeof(ColoredPiece) << 6;
 
-Vector moves, new_moves;
+Vector moves, new_moves, boards;
 ByteSet src_squares;
 
 #define MOVE_LEN 10
 #define RESTART_KEY SDLK_BACKSPACE
 #define SHOW_CTRL SDLK_SPACE
 char move_str[MOVE_LEN], *move_end;
-char filter_rank, filter_file, dest_square;
+char move, filter_rank, filter_file, dest_square;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -48,18 +49,25 @@ int init_game()
         return 1;
 
     init_chess();
-    init_set(&src_squares, 10);
+    init_set(&src_squares, 20);
     init_vector(&moves, sizeof(Move), 20);
     init_vector(&new_moves, sizeof(Move), 10);
+    init_vector(&boards, BOARD_BYTES, 20);
 
     return 0;
 }
 
 int start_game()
 {
+    clear_vector(&boards);
+    move = 0;
+
     assert(load_fen(STARTING_FEN) == 0);
+    vector_append(&boards, board);
+
     *move_str = 0;
     move_end = move_str;
+
     return draw->draw_screen();
 }
 
@@ -72,8 +80,12 @@ void handle_key(SDL_Keysym keysym)
 void cleanup_game()
 {
     cleanup_chess();
+
+    cleanup_set(&src_squares);
     cleanup_vector(&moves);
     cleanup_vector(&new_moves);
+    cleanup_vector(&boards);
+
     if (draw)
         draw->cleanup();
 }
@@ -93,7 +105,11 @@ void select_piece(SDL_Keycode key)
     move_end = move_str;
     *(move_end++) = key;
 
-    if (key == SHOW_CTRL)
+    if (key == SDLK_LEFT && move > 0)
+        memcpy(board, vector_get(&boards, --move), BOARD_BYTES);
+    else if (key == SDLK_RIGHT && move < boards.size - 1)
+        memcpy(board, vector_get(&boards, ++move), BOARD_BYTES);
+    else if (key == SHOW_CTRL)
     {
         show_controlled_squares();
         return;
@@ -149,6 +165,8 @@ void select_move(SDL_Keycode key)
                 draw->draw_board();
                 return;
             }
+            boards.size = ++move;
+            vector_append(&boards, board);
         }
     }
 

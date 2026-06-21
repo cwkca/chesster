@@ -71,7 +71,7 @@ void init_chess()
     }
 
     init_vector(&opponent_moves, sizeof(Move), 30);
-    init_set(&squares, 12);
+    init_set(&squares, 16);
 }
 
 void cleanup_chess()
