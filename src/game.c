@@ -27,18 +27,19 @@ void select_move(SDL_Keycode key);
 void (*key_handler)(SDL_Keycode key) = select_piece;
 
 /* Move filtering */
-char get_dest_square();
 void filter_moves(char (*filter)(Move *));
 char by_capture(Move *m);
 char by_rank(Move *m);
 char by_file(Move *m);
 char by_dest(Move *m);
+char get_dest_square();
 
 /* Other private functions */
+void filter_check(PieceColor color);
 void show_controlled_squares();
 void show_moves();
 void do_move(ColoredPiece *board, Move *move);
-void move_black();
+char move_black();
 
 int init_game()
 {
@@ -70,6 +71,7 @@ void handle_key(SDL_Keysym keysym)
 
 void cleanup_game()
 {
+    cleanup_chess();
     cleanup_vector(&moves);
     cleanup_vector(&new_moves);
     if (draw)
@@ -115,6 +117,7 @@ void select_piece(SDL_Keycode key)
         find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
 
     get_moves_from(board, &src_squares, &moves);
+    filter_check(P_WHITE);
     clear_set(&src_squares);
 
     if (moves.size > 0)
@@ -138,7 +141,14 @@ void select_move(SDL_Keycode key)
         else if (moves.size == 1)
         {
             do_move(board, vector_get(&moves, 0));
-            move_black();
+            if (!move_black())
+            {
+                printf("You win!\n");
+                highlight_squares(FULL_BOARD, GREEN);
+                key_handler = NULL;
+                draw->draw_board();
+                return;
+            }
         }
     }
 
@@ -218,6 +228,28 @@ char get_dest_square()
     return -1;
 }
 
+void filter_check(PieceColor color)
+{
+    clear_vector(&new_moves);
+
+    Move *m;
+    char i, target;
+    for (i = 0; i < moves.size; i++)
+    {
+        m = vector_get(&moves, i);
+        target = board[m->dest_square];
+        do_move(board, m);
+
+        if (!king_in_check(board, color))
+            vector_append(&new_moves, m);
+
+        board[m->src_square] = board[m->dest_square];
+        board[m->dest_square] = target;
+    }
+
+    swap_vectors(&moves, &new_moves);
+}
+
 void show_controlled_squares()
 {
     Bitboard white_control;
@@ -259,7 +291,7 @@ void do_move(ColoredPiece *board, Move *move)
     board[move->dest_square] = piece;
 }
 
-void move_black()
+char move_black()
 {
     clear_board_highlights();
     draw->draw_board();
@@ -271,13 +303,10 @@ void move_black()
 
     clear_vector(&moves);
     get_moves_from(board, &src_squares, &moves);
+    filter_check(P_BLACK);
+
     if (moves.size)
         do_move(board, choose_random_elt(&moves));
-    else
-    {
-        printf("You win!\n");
-        highlight_squares(FULL_BOARD, GREEN);
-        draw->draw_board();
-        key_handler = NULL;
-    }
+
+    return moves.size;
 }

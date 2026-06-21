@@ -43,6 +43,9 @@ typedef enum
     MUST_CAPTURE_ENEMY
 } CaptureMode;
 
+Vector opponent_moves;
+ByteSet squares;
+
 /* Private function prototypes */
 int safe_get_lut_index(char piece);
 void report_fen_error(const char *fen, int index);
@@ -66,6 +69,15 @@ void init_chess()
         assert(lut_index);
         PIECE_LOOKUP[lut_index] = piece_index;
     }
+
+    init_vector(&opponent_moves, sizeof(Move), 30);
+    init_set(&squares, 12);
+}
+
+void cleanup_chess()
+{
+    cleanup_vector(&opponent_moves);
+    cleanup_set(&squares);
 }
 
 char is_color(ColoredPiece piece, PieceColor color)
@@ -265,6 +277,29 @@ void get_all_moves(ColoredPiece *board, PieceColor color, char for_control, Bitb
 
 char king_in_check(ColoredPiece *board, PieceColor color)
 {
+    char i, king_square;
+    Move *m;
+    PieceColor opponent = color ^ COLOR_MASK;
+    clear_vector(&opponent_moves);
+    clear_set(&squares);
+
+    find_pieces(board, KING | color, &squares);
+    assert(squares.size == 1);
+    king_square = squares.bytes[0];
+    clear_set(&squares);
+
+    for (i = 0; i < 64; i++)
+        if (is_color(board[i], opponent))
+            set_add(&squares, i);
+
+    get_moves_from(board, &squares, &opponent_moves);
+    for (i = 0; i < opponent_moves.size; i++)
+    {
+        m = vector_get(&opponent_moves, i);
+        if (m->dest_square == king_square)
+            return 1;
+    }
+
     return 0;
 }
 
