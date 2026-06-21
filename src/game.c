@@ -38,7 +38,7 @@ char get_dest_square();
 void filter_check(PieceColor color);
 void show_controlled_squares();
 void show_moves();
-void do_move(ColoredPiece *board, Move *move);
+void do_move(ColoredPiece *board, Move *move, Piece promote);
 char move_black();
 
 int init_game()
@@ -140,7 +140,7 @@ void select_move(SDL_Keycode key)
             start_game();
         else if (moves.size == 1)
         {
-            do_move(board, vector_get(&moves, 0));
+            do_move(board, vector_get(&moves, 0), QUEEN);
             if (!move_black())
             {
                 printf("You win!\n");
@@ -238,7 +238,7 @@ void filter_check(PieceColor color)
     {
         m = vector_get(&moves, i);
         target = board[m->dest_square];
-        do_move(board, m);
+        do_move(board, m, NONE);
 
         if (!king_in_check(board, color))
             vector_append(&new_moves, m);
@@ -284,11 +284,14 @@ void show_moves()
     draw->draw_board();
 }
 
-void do_move(ColoredPiece *board, Move *move)
+void do_move(ColoredPiece *board, Move *move, Piece promote)
 {
     ColoredPiece piece = board[move->src_square];
     board[move->src_square] = NONE;
     board[move->dest_square] = piece;
+
+    if (promote && (piece & PIECE_MASK) == PAWN && square_rank(move->dest_square) == 7)
+        board[move->dest_square] = promote | (piece & COLOR_MASK);
 }
 
 char move_black()
@@ -306,7 +309,7 @@ char move_black()
     filter_check(P_BLACK);
 
     if (moves.size)
-        do_move(board, choose_random_elt(&moves));
+        do_move(board, choose_random_elt(&moves), QUEEN);
 
     return moves.size;
 }
