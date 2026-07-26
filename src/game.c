@@ -39,7 +39,7 @@ char get_dest_square();
 void filter_check(PieceColor color);
 void show_controlled_squares();
 void show_moves();
-void do_move(ColoredPiece *board, Move *move, Piece promote);
+void do_move(ColoredPiece *board, Move *move, Piece promote, char testing);
 char move_black();
 
 int init_game() {
@@ -49,8 +49,8 @@ int init_game() {
 
   init_chess();
   init_set(&src_squares, 20);
-  init_vector(&moves, sizeof(Move), 20);
-  init_vector(&new_moves, sizeof(Move), 10);
+  init_vector(&moves, sizeof(Move), 40);
+  init_vector(&new_moves, sizeof(Move), 40);
   init_vector(&boards, BOARD_BYTES, 20);
 
   return 0;
@@ -62,6 +62,7 @@ int start_game() {
 
   assert(load_fen(STARTING_FEN) == 0);
   vector_append(&boards, board);
+  castling_rights = CASTLE_ALL;
 
   *move_str = 0;
   move_end = move_str;
@@ -101,6 +102,7 @@ void select_piece(SDL_Keycode key) {
   *(move_end++) = key;
 
   if (key == SDLK_LEFT && move > 0)
+    // Todo: restore castling rights
     memcpy(board, vector_get(&boards, --move), BOARD_BYTES);
   else if (key == SDLK_RIGHT && move < boards.size - 1)
     memcpy(board, vector_get(&boards, ++move), BOARD_BYTES);
@@ -120,6 +122,8 @@ void select_piece(SDL_Keycode key) {
     find_file_pawns(board, P_WHITE, key - 'a', &src_squares);
   else if (is_piece)
     find_pieces(board, get_piece_named(key) & PIECE_MASK, &src_squares);
+  else if (key == 'o')
+    get_castles(board, P_WHITE, &moves);
 
   get_moves_from(board, &src_squares, &moves);
   filter_check(P_WHITE);
@@ -139,7 +143,7 @@ void select_move(SDL_Keycode key) {
     if (*move_str == RESTART_KEY)
       start_game();
     else if (moves.size == 1) {
-      do_move(board, vector_get(&moves, 0), QUEEN);
+      do_move(board, vector_get(&moves, 0), QUEEN, 0);
       if (!move_black()) {
         printf("You win!\n");
         highlight_squares(FULL_BOARD, GREEN);
@@ -157,6 +161,7 @@ void select_move(SDL_Keycode key) {
   if (move_end - move_str < MOVE_LEN && is_move_char(key))
     *(move_end++) = key;
 
+  // Todo: allow selection of queenside castling
   if (key == 'x')
     filter_moves(by_capture);
   else if (is_file(key)) {
@@ -223,8 +228,15 @@ void filter_check(PieceColor color) {
   char i, target;
   for (i = 0; i < moves.size; i++) {
     m = vector_get(&moves, i);
+
+    // Castles are pre-filtered for check
+    if (is_castle(m)) {
+      vector_append(&new_moves, m);
+      continue;
+    }
+
     target = board[m->dest_square];
-    do_move(board, m, NONE);
+    do_move(board, m, NONE, 1);
 
     if (!king_in_check(board, color))
       vector_append(&new_moves, m);
@@ -254,27 +266,49 @@ void show_controlled_squares() {
 }
 
 void show_moves() {
-  clear_board_highlights();
-
   char i;
   Move *m;
+  Castle c;
+
+  clear_board_highlights();
   for (i = 0; i < moves.size; i++) {
     m = vector_get(&moves, i);
-    square_highlights[m->src_square] = BLUE;
-    square_highlights[m->dest_square] = CYAN;
+    if (is_castle(m)) {
+      parse_castle(m, &c);
+      square_highlights[c.king_start] = square_highlights[c.rook_start] = BLUE;
+      square_highlights[c.king_end] = square_highlights[c.rook_end] = CYAN;
+    } else {
+      square_highlights[m->src_square] = BLUE;
+      square_highlights[m->dest_square] = CYAN;
+    }
   }
 
   draw->draw_board();
 }
 
-void do_move(ColoredPiece *board, Move *move, Piece promote) {
-  ColoredPiece piece = board[move->src_square];
-  board[move->src_square] = NONE;
-  board[move->dest_square] = piece;
+void do_move(ColoredPiece *board, Move *move, Piece promote, char testing) {
+  char king, rook, dir;
+  ColoredPiece piece;
+  Castle c;
 
-  if (promote && (piece & PIECE_MASK) == PAWN &&
-      square_rank(move->dest_square) == 7)
-    board[move->dest_square] = promote | (piece & COLOR_MASK);
+  if (is_castle(move)) {
+    parse_castle(move, &c);
+    board[c.king_end] = board[c.king_start];
+    board[c.rook_end] = board[c.rook_start];
+    board[c.king_start] = board[c.rook_start] = NONE;
+  } else {
+    // Handle normal moves
+    piece = board[move->src_square];
+    board[move->src_square] = NONE;
+    board[move->dest_square] = piece;
+
+    if (promote && (piece & PIECE_MASK) == PAWN &&
+        square_rank(move->dest_square) == 7)
+      board[move->dest_square] = promote | (piece & COLOR_MASK);
+  }
+
+  if (!testing)
+    update_castling_rights(move->src_square & 0x3F);
 }
 
 char move_black() {
@@ -288,10 +322,11 @@ char move_black() {
 
   clear_vector(&moves);
   get_moves_from(board, &src_squares, &moves);
+  get_castles(board, P_BLACK, &moves);
   filter_check(P_BLACK);
 
   if (moves.size)
-    do_move(board, choose_random_elt(&moves), QUEEN);
+    do_move(board, choose_random_elt(&moves), QUEEN, 0);
 
   return moves.size;
 }

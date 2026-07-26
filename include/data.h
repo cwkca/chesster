@@ -11,6 +11,8 @@ typedef struct {
   char src_square, dest_square;
 } Move;
 
+#define SPECIAL_MOVE 0x40
+
 typedef struct {
   void *data;
   int size, capacity, memsize;
@@ -24,7 +26,7 @@ typedef struct {
 
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
-void set_square(int square, Bitboard board);
+char has_square(Bitboard board, char square);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
 void init_vector(Vector *vector, int elt_size, char capacity);

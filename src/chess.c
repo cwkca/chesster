@@ -21,6 +21,8 @@ const char DIRECTIONS[16] = {0, -1, 1,  -1, 1,  0, 1,  1,
 const char KNIGHT_DIRS[16] = {1,  -2, 2,  -1, 2,  1,  1,  2,
                               -1, 2,  -2, 1,  -2, -1, -1, -2};
 
+char castling_rights;
+
 typedef enum {
   NO_CAPTURE = 1,
   CAPTURE_ENEMY,
@@ -28,7 +30,6 @@ typedef enum {
   MUST_CAPTURE_ENEMY
 } CaptureMode;
 
-Vector opponent_moves;
 ByteSet squares;
 
 /* Private function prototypes */
@@ -40,6 +41,8 @@ void get_slider_moves(ColoredPiece *board, int src_square, CaptureMode capture,
 char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves);
 char in_bounds(int rank, int file);
+char can_castle(ColoredPiece *board, char row_offset, Bitboard opponent_moves,
+                CastleSide side);
 
 void init_chess() {
   int lut_index;
@@ -53,14 +56,10 @@ void init_chess() {
     PIECE_LOOKUP[lut_index] = piece_index;
   }
 
-  init_vector(&opponent_moves, sizeof(Move), 30);
   init_set(&squares, 16);
 }
 
-void cleanup_chess() {
-  cleanup_vector(&opponent_moves);
-  cleanup_set(&squares);
-}
+void cleanup_chess() { cleanup_set(&squares); }
 
 char is_color(ColoredPiece piece, PieceColor color) {
   if (!piece)
@@ -159,9 +158,8 @@ void get_moves(ColoredPiece *board, char square, char for_control,
 
   switch (piece & PIECE_MASK) {
   case KING:
-    for (dir = DIRECTIONS; (dir - DIRECTIONS) < sizeof(DIRECTIONS); dir += 2) {
+    for (dir = DIRECTIONS; (dir - DIRECTIONS) < sizeof(DIRECTIONS); dir += 2)
       check_move(board, square, capture, rank + dir[0], file + dir[1], moves);
-    }
     break;
 
   case QUEEN:
@@ -232,30 +230,83 @@ void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
       get_moves(board, sq, for_control, moves);
 }
 
-char king_in_check(ColoredPiece *board, PieceColor color) {
-  char i, king_square;
-  Move *m;
-  PieceColor opponent = color ^ COLOR_MASK;
-  clear_vector(&opponent_moves);
-  clear_set(&squares);
+void get_castles(ColoredPiece *board, PieceColor color, Vector *moves) {
+  Bitboard opponent_moves;
+  Move castle;
+  char king_square = 4, rights = castling_rights;
+  char row_offset = color == P_BLACK ? 56 : 0;
 
+  if (color == P_BLACK)
+    rights >>= 2;
+  if (!(rights & 3))
+    return;
+
+  get_all_moves(board, color ^ COLOR_MASK, 1, opponent_moves);
+  castle.src_square = (color == P_BLACK ? 56 : 4) | SPECIAL_MOVE;
+
+  if ((rights & CASTLE_QUEENSIDE) &&
+      can_castle(board, row_offset, opponent_moves, CASTLE_QUEENSIDE)) {
+    castle.dest_square = row_offset;
+    vector_append(moves, &castle);
+  }
+
+  if ((rights & CASTLE_KINGSIDE) &&
+      can_castle(board, row_offset, opponent_moves, CASTLE_KINGSIDE)) {
+    castle.dest_square = row_offset + 7;
+    vector_append(moves, &castle);
+  }
+}
+
+void parse_castle(Move *m, Castle *c) {
+  assert(is_castle(m));
+
+  c->king_start = m->src_square & 0x3F;
+  c->rook_start = m->dest_square;
+  c->dir = c->king_start > c->rook_start ? -1 : 1;
+
+  c->king_end = c->king_start + (c->dir << 1);
+  c->rook_end = c->king_start + c->dir;
+}
+
+void update_castling_rights(char start_square) {
+  switch (start_square) {
+  case 0:
+    castling_rights &= ~CASTLE_WQ;
+    break;
+
+  case 4:
+    castling_rights &= ~CASTLE_W;
+    break;
+
+  case 7:
+    castling_rights &= ~CASTLE_WK;
+    break;
+
+  case 56:
+    castling_rights &= ~CASTLE_BQ;
+    break;
+
+  case 60:
+    castling_rights &= ~CASTLE_B;
+    break;
+
+  case 63:
+    castling_rights &= ~CASTLE_BK;
+  }
+}
+
+char king_in_check(ColoredPiece *board, PieceColor color) {
+  char king_square;
+  Bitboard opponent_moves;
+
+  clear_set(&squares);
   find_pieces(board, KING | color, &squares);
   assert(squares.size == 1);
   king_square = squares.bytes[0];
   clear_set(&squares);
 
-  for (i = 0; i < 64; i++)
-    if (is_color(board[i], opponent))
-      set_add(&squares, i);
-
-  get_moves_from(board, &squares, &opponent_moves);
-  for (i = 0; i < opponent_moves.size; i++) {
-    m = vector_get(&opponent_moves, i);
-    if (m->dest_square == king_square)
-      return 1;
-  }
-
-  return 0;
+  get_all_moves(board, color ^ COLOR_MASK, 1, opponent_moves);
+  return has_square(opponent_moves, king_square);
 }
 
 void add_board_to_vector(char src_square, Bitboard move_board,
@@ -338,4 +389,36 @@ char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
 
 char in_bounds(int rank, int file) {
   return rank >= 0 && rank < 8 && file >= 0 && file < 8;
+}
+
+char can_castle(ColoredPiece *board, char row_offset, Bitboard opponent_moves,
+                CastleSide side) {
+  char sq;
+  switch (side) {
+  case CASTLE_QUEENSIDE:
+    // Verify vacant squares
+    for (sq = 1; sq < 4; sq++)
+      if (board[row_offset + sq])
+        return 0;
+
+    // Verify king not in check
+    for (sq = 2; sq < 5; sq++)
+      if (has_square(opponent_moves, row_offset + sq))
+        return 0;
+
+    return 1;
+
+  case CASTLE_KINGSIDE:
+    // Verify vacant squares
+    for (sq = 5; sq < 7; sq++)
+      if (board[row_offset + sq])
+        return 0;
+
+    // Verify king not in check
+    for (sq = 4; sq < 7; sq++)
+      if (has_square(opponent_moves, row_offset + sq))
+        return 0;
+
+    return 1;
+  }
 }

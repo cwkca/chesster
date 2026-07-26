@@ -27,10 +27,26 @@ typedef enum {
 #define COLOR_MASK 8
 #define PIECE_MASK 7
 
+typedef enum { CASTLE_QUEENSIDE = 1, CASTLE_KINGSIDE = 2 } CastleSide;
+
+#define CASTLE_WQ CASTLE_QUEENSIDE
+#define CASTLE_WK CASTLE_KINGSIDE
+#define CASTLE_W (CASTLE_WQ | CASTLE_WK)
+#define CASTLE_BQ (CASTLE_QUEENSIDE << 2)
+#define CASTLE_BK (CASTLE_KINGSIDE << 2)
+#define CASTLE_B (CASTLE_BQ | CASTLE_BK)
+#define CASTLE_ALL (CASTLE_W | CASTLE_B)
+
+typedef struct {
+  char king_start, rook_start, king_end, rook_end, dir;
+} Castle;
+
 extern const char *PIECE_NAMES;
 extern const char *COLORED_PIECE_NAMES;
 
 extern const char *STARTING_FEN;
+
+extern char castling_rights;
 
 void init_chess();
 void cleanup_chess();
@@ -54,6 +70,12 @@ void get_moves(ColoredPiece *board, char square, char for_control,
 void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
 void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
                    Bitboard moves);
+
+void get_castles(ColoredPiece *board, PieceColor color, Vector *moves);
+void parse_castle(Move *move, Castle *castle);
+void update_castling_rights(char start_square);
+#define is_castle(move) ((move)->src_square & SPECIAL_MOVE)
+
 char king_in_check(ColoredPiece *board, PieceColor color);
 
 void add_board_to_vector(char src_square, Bitboard move_board,

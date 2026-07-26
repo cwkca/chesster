@@ -24,8 +24,8 @@ char board_empty(const Bitboard board) {
   return 1;
 }
 
-void set_square(int square, Bitboard board) {
-  board[square_rank(square)] |= 1 << square_file(square);
+char has_square(Bitboard board, char square) {
+  return board[square_rank(square)] & (1 << square_file(square));
 }
 
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
