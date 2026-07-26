@@ -21,8 +21,6 @@ const char DIRECTIONS[16] = {0, -1, 1,  -1, 1,  0, 1,  1,
 const char KNIGHT_DIRS[16] = {1,  -2, 2,  -1, 2,  1,  1,  2,
                               -1, 2,  -2, 1,  -2, -1, -1, -2};
 
-char castling_rights;
-
 typedef enum {
   NO_CAPTURE = 1,
   CAPTURE_ENEMY,
@@ -233,7 +231,7 @@ void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
 void get_castles(ColoredPiece *board, PieceColor color, Vector *moves) {
   Bitboard opponent_moves;
   Move castle;
-  char king_square = 4, rights = castling_rights;
+  char king_square = 4, rights = board[64];
   char row_offset = color == P_BLACK ? 56 : 0;
 
   if (color == P_BLACK)
@@ -271,27 +269,27 @@ void parse_castle(Move *m, Castle *c) {
 void update_castling_rights(char start_square) {
   switch (start_square) {
   case 0:
-    castling_rights &= ~CASTLE_WQ;
+    board[64] &= ~CASTLE_WQ;
     break;
 
   case 4:
-    castling_rights &= ~CASTLE_W;
+    board[64] &= ~CASTLE_W;
     break;
 
   case 7:
-    castling_rights &= ~CASTLE_WK;
+    board[64] &= ~CASTLE_WK;
     break;
 
   case 56:
-    castling_rights &= ~CASTLE_BQ;
+    board[64] &= ~CASTLE_BQ;
     break;
 
   case 60:
-    castling_rights &= ~CASTLE_B;
+    board[64] &= ~CASTLE_B;
     break;
 
   case 63:
-    castling_rights &= ~CASTLE_BK;
+    board[64] &= ~CASTLE_BK;
   }
 }
 

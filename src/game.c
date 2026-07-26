@@ -1,8 +1,9 @@
 /** Game flow and UI logic. */
 
 #include <assert.h>
+#include <stdlib.h> /* srand */
 #include <string.h>
-#include <time.h> /* nanosleep */
+#include <time.h> /* nanosleep, time */
 
 #include "chess.h"
 #include "draw.h"
@@ -10,8 +11,8 @@
 
 const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
-ColoredPiece board[64];
-const int BOARD_BYTES = sizeof(ColoredPiece) << 6;
+ColoredPiece board[65];
+const int BOARD_BYTES = sizeof(board);
 
 Vector moves, new_moves, boards;
 ByteSet src_squares;
@@ -43,6 +44,7 @@ void do_move(ColoredPiece *board, Move *move, Piece promote, char testing);
 char move_black();
 
 int init_game() {
+  srand(time(NULL));
   draw = init_draw();
   if (!draw)
     return 1;
@@ -62,7 +64,7 @@ int start_game() {
 
   assert(load_fen(STARTING_FEN) == 0);
   vector_append(&boards, board);
-  castling_rights = CASTLE_ALL;
+  board[64] = CASTLE_ALL;
 
   *move_str = 0;
   move_end = move_str;

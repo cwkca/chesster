@@ -46,8 +46,6 @@ extern const char *COLORED_PIECE_NAMES;
 
 extern const char *STARTING_FEN;
 
-extern char castling_rights;
-
 void init_chess();
 void cleanup_chess();
 
