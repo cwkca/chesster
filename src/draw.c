@@ -1,8 +1,8 @@
 /** Game-specific graphics. */
 
+#include <SDL.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL.h>
 
 #include "draw.h"
 #include "draw_sdl.h"
@@ -33,35 +33,28 @@ DrawAdapter SDL_DRAW = {
     &cleanup_sdl,
 };
 
-DrawAdapter *init_draw()
-{
-    return !getenv("CHESSTERM") && init_draw_sdl() == 0
-               ? &SDL_DRAW
-               : &TERM_DRAW;
+DrawAdapter *init_draw() {
+  return !getenv("CHESSTERM") && init_draw_sdl() == 0 ? &SDL_DRAW : &TERM_DRAW;
 }
 
 /* Remove? */
-void highlight_squares(const Bitboard squares, SDL_Color color)
-{
-    int rank, file;
-    SDL_Color *square = square_highlights;
-    const char *rank_highlights = squares;
-    char mask;
-    for (rank = 0; rank < 8; rank++)
-    {
-        mask = 1;
-        for (file = 0; file < 8; file++)
-        {
-            if (*rank_highlights & mask)
-                *square = color;
-            mask <<= 1;
-            square++;
-        }
-        rank_highlights++;
+void highlight_squares(const Bitboard squares, SDL_Color color) {
+  int rank, file;
+  SDL_Color *square = square_highlights;
+  const char *rank_highlights = squares;
+  char mask;
+  for (rank = 0; rank < 8; rank++) {
+    mask = 1;
+    for (file = 0; file < 8; file++) {
+      if (*rank_highlights & mask)
+        *square = color;
+      mask <<= 1;
+      square++;
     }
+    rank_highlights++;
+  }
 }
 
-void clear_board_highlights()
-{
-    memset(square_highlights, 0, sizeof(square_highlights));
+void clear_board_highlights() {
+  memset(square_highlights, 0, sizeof(square_highlights));
 }

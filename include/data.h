@@ -7,22 +7,19 @@ extern const Bitboard FULL_BOARD;
 #define square_file(s) ((s) & 7)
 #define square_rank(s) ((s) >> 3)
 
-typedef struct
-{
-    char src_square, dest_square;
+typedef struct {
+  char src_square, dest_square;
 } Move;
 
-typedef struct
-{
-    void *data;
-    int size, capacity, memsize;
-    char elt_magn;
+typedef struct {
+  void *data;
+  int size, capacity, memsize;
+  char elt_magn;
 } Vector;
 
-typedef struct
-{
-    char *bytes;
-    int size, capacity;
+typedef struct {
+  char *bytes;
+  int size, capacity;
 } ByteSet;
 
 void clear_board(Bitboard board);

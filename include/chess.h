@@ -5,36 +5,23 @@
 
 #define NONE 0
 
-typedef enum
-{
-    KING = 1,
-    QUEEN,
-    ROOK,
-    BISHOP,
-    KNIGHT,
-    PAWN
-} Piece;
+typedef enum { KING = 1, QUEEN, ROOK, BISHOP, KNIGHT, PAWN } Piece;
 
-typedef enum
-{
-    P_WHITE = 0,
-    P_BLACK = 8
-} PieceColor;
+typedef enum { P_WHITE = 0, P_BLACK = 8 } PieceColor;
 
-typedef enum
-{
-    WHITE_KING = 1,
-    WHITE_QUEEN,
-    WHITE_ROOK,
-    WHITE_BISHOP,
-    WHITE_KNIGHT,
-    WHITE_PAWN,
-    BLACK_KING = 9,
-    BLACK_QUEEN,
-    BLACK_ROOK,
-    BLACK_BISHOP,
-    BLACK_KNIGHT,
-    BLACK_PAWN
+typedef enum {
+  WHITE_KING = 1,
+  WHITE_QUEEN,
+  WHITE_ROOK,
+  WHITE_BISHOP,
+  WHITE_KNIGHT,
+  WHITE_PAWN,
+  BLACK_KING = 9,
+  BLACK_QUEEN,
+  BLACK_ROOK,
+  BLACK_BISHOP,
+  BLACK_KNIGHT,
+  BLACK_PAWN
 } ColoredPiece;
 
 #define COLOR_MASK 8
@@ -59,13 +46,17 @@ int load_fen(const char *fen);
 
 void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares);
 void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares);
-void find_file_pawns(ColoredPiece *board, PieceColor color, char file, ByteSet *squares);
+void find_file_pawns(ColoredPiece *board, PieceColor color, char file,
+                     ByteSet *squares);
 
-void get_moves(ColoredPiece *board, char square, char for_control, Bitboard moves);
+void get_moves(ColoredPiece *board, char square, char for_control,
+               Bitboard moves);
 void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
-void get_all_moves(ColoredPiece *board, PieceColor color, char for_control, Bitboard moves);
+void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
+                   Bitboard moves);
 char king_in_check(ColoredPiece *board, PieceColor color);
 
-void add_board_to_vector(char src_square, Bitboard move_board, Vector *move_vector);
+void add_board_to_vector(char src_square, Bitboard move_board,
+                         Vector *move_vector);
 
 #endif /* CHESS_H */

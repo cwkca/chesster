@@ -1,19 +1,18 @@
 #ifndef DRAW_H
 #define DRAW_H
 
-#include <SDL.h>
 #include "chess.h"
+#include <SDL.h>
 
 extern const SDL_Color C_BLACK, C_WHITE, GREY, CLEAR;
 extern const SDL_Color RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA;
 
 extern SDL_Color square_highlights[64];
 
-typedef struct
-{
-    int (*draw_screen)();
-    int (*draw_board)();
-    void (*cleanup)();
+typedef struct {
+  int (*draw_screen)();
+  int (*draw_board)();
+  void (*cleanup)();
 } DrawAdapter;
 
 DrawAdapter *init_draw();

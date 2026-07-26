@@ -1,8 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <SDL.h>
 #include "chess.h"
+#include <SDL.h>
 
 extern ColoredPiece board[64];
 
