@@ -104,7 +104,6 @@ void select_piece(SDL_Keycode key) {
   *(move_end++) = key;
 
   if (key == SDLK_LEFT && move > 0)
-    // Todo: restore castling rights
     memcpy(board, vector_get(&boards, --move), BOARD_BYTES);
   else if (key == SDLK_RIGHT && move < boards.size - 1)
     memcpy(board, vector_get(&boards, ++move), BOARD_BYTES);
@@ -147,8 +146,13 @@ void select_move(SDL_Keycode key) {
     else if (moves.size == 1) {
       do_move(board, vector_get(&moves, 0), QUEEN, 0);
       if (!move_black()) {
-        printf("You win!\n");
-        highlight_squares(FULL_BOARD, GREEN);
+        if (king_in_check(board, P_BLACK)) {
+          printf("You win!\n");
+          highlight_squares(FULL_BOARD, GREEN);
+        } else {
+          printf("Stalemate!\n");
+          highlight_squares(FULL_BOARD, GREY);
+        }
         key_handler = NULL;
         draw->draw_board();
         return;
