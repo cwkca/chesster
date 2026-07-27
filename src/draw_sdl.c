@@ -20,12 +20,15 @@ const SDL_Color DARK_RGB = {100, 60, 30};
 #define MARGIN 20
 
 int square_size;
+SDL_Point material_disp[2], control_disp[2];
+SDL_Rect stats_erase_rect;
 
 /* Private function prototypes */
 void draw_empty_board();
 void draw_pieces();
 void draw_piece(ColoredPiece piece, int file, int rank);
 int draw_board_labels();
+int layout_stats();
 
 int init_draw_sdl() {
   if (init_sdl())
@@ -39,7 +42,7 @@ int init_draw_sdl() {
 }
 
 int draw_screen_sdl() {
-  return draw_board_sdl() || draw_board_labels() || draw_stats_sdl();
+  return draw_board_sdl() || draw_board_labels() || layout_stats();
 }
 
 int draw_board_sdl() {
@@ -48,35 +51,7 @@ int draw_board_sdl() {
   return SDL_UpdateWindowSurface(window);
 }
 
-int draw_stats_sdl() {
-  SDL_Point cursor;
-  int left_edge = CHESSBOARD_RECT.x + CHESSBOARD_RECT.w;
-  int center = (WINDOW_RECT.w + left_edge) >> 1;
-
-  cursor.x = center;
-  cursor.y = CHESSBOARD_RECT.y + (square_size >> 1);
-  draw_text("White", C_WHITE, cursor, ALIGN_CENTER);
-
-  cursor.x = left_edge + MARGIN;
-  cursor.y += LINE_SPACING;
-  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
-
-  cursor.y += LINE_SPACING;
-  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
-
-  cursor.x = center;
-  cursor.y = CHESSBOARD_RECT.y + ((CHESSBOARD_RECT.h + square_size) >> 1);
-  draw_text("Black", GREY, cursor, ALIGN_CENTER);
-
-  cursor.x = left_edge + MARGIN;
-  cursor.y += LINE_SPACING;
-  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
-
-  cursor.y += LINE_SPACING;
-  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
-
-  return SDL_UpdateWindowSurface(window);
-}
+int update_stats_sdl() { return 0; }
 
 void cleanup_draw_sdl() { cleanup_sdl(); }
 
@@ -156,6 +131,46 @@ int draw_board_labels() {
     draw_text(label, C_WHITE, text_point, ALIGN_CENTER);
     text_point.x += square_size;
   }
+
+  return SDL_UpdateWindowSurface(window);
+}
+
+int layout_stats() {
+  SDL_Point cursor;
+  int left_edge = CHESSBOARD_RECT.x + CHESSBOARD_RECT.w;
+  int center = (WINDOW_RECT.w + left_edge) >> 1;
+  int left_margin = left_edge + MARGIN, right_margin = WINDOW_RECT.w - MARGIN;
+
+  cursor.x = center;
+  cursor.y = CHESSBOARD_RECT.y + (square_size >> 1);
+  draw_text("White", C_WHITE, cursor, ALIGN_CENTER);
+
+  cursor.x = left_margin;
+  cursor.y += LINE_SPACING;
+  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
+  material_disp[0].y = cursor.y;
+
+  cursor.y += LINE_SPACING;
+  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
+  control_disp[0].y = cursor.y;
+
+  cursor.x = center;
+  cursor.y = CHESSBOARD_RECT.y + ((CHESSBOARD_RECT.h + square_size) >> 1);
+  draw_text("Black", GREY, cursor, ALIGN_CENTER);
+
+  cursor.x = left_margin;
+  cursor.y += LINE_SPACING;
+  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
+  material_disp[1].y = cursor.y;
+
+  cursor.y += LINE_SPACING;
+  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
+  control_disp[1].y = cursor.y;
+
+  material_disp[0].x = material_disp[1].x = control_disp[0].x =
+      control_disp[1].x = right_margin;
+
+  // Todo: set up stats_erase_rect
 
   return SDL_UpdateWindowSurface(window);
 }

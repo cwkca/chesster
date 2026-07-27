@@ -24,14 +24,14 @@ SDL_Color square_highlights[64] = {0};
 DrawAdapter TERM_DRAW = {
     draw_screen_term,
     draw_board_term,
-    draw_stats_term,
+    update_stats_term,
     cleanup_term,
 };
 
 DrawAdapter SDL_DRAW = {
     draw_screen_sdl,
     draw_board_sdl,
-    draw_stats_sdl,
+    update_stats_sdl,
     cleanup_sdl,
 };
 

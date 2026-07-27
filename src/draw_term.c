@@ -47,7 +47,7 @@ int draw_board_term() {
   return 0;
 }
 
-int draw_stats_term() {
+int update_stats_term() {
   /* Todo */
   return 0;
 }
