@@ -12,7 +12,7 @@
 #include "game.h"
 #include "sdl_util.h"
 
-const SDL_Rect CHESSBOARD_RECT = {160, 40, 480, 480};
+const SDL_Rect CHESSBOARD_RECT = {80, 40, 480, 480};
 const SDL_Color LIGHT_RGB = {200, 160, 130};
 const SDL_Color DARK_RGB = {100, 60, 30};
 
@@ -29,19 +29,23 @@ int init_draw_sdl() {
     return 1;
 
   assert(CHESSBOARD_RECT.h == CHESSBOARD_RECT.w);
-  assert(CHESSBOARD_RECT.h % 8 == 0);
-  square_size = CHESSBOARD_RECT.h / 8;
+  assert(!(CHESSBOARD_RECT.h & 7)); /* Height should be a multiple of 8 */
+  square_size = CHESSBOARD_RECT.h >> 3;
 
   return 0;
 }
 
-int draw_screen_sdl() { return draw_board_sdl() || draw_board_labels(); }
+int draw_screen_sdl() {
+  return draw_board_sdl() || draw_board_labels() || draw_stats_sdl();
+}
 
 int draw_board_sdl() {
   draw_empty_board();
   draw_pieces();
   return SDL_UpdateWindowSurface(window);
 }
+
+int draw_stats_sdl() { return SDL_UpdateWindowSurface(window); }
 
 void cleanup_draw_sdl() { cleanup_sdl(); }
 
@@ -106,21 +110,18 @@ void draw_piece(ColoredPiece piece, int file, int rank) {
 }
 
 int draw_board_labels() {
-  int i;
   char label[2] = {0};
   SDL_Point text_point;
   text_point.x = CHESSBOARD_RECT.x - (square_size >> 1);
   text_point.y = CHESSBOARD_RECT.y + (square_size >> 1);
 
-  for (i = 8; i > 0; i--) {
-    *label = i + '0';
+  for (*label = '8'; *label > '0'; (*label)--) {
     draw_text_centered(label, text_point);
     text_point.y += square_size;
   }
 
   text_point.x += square_size;
-  for (i = 0; i < 8; i++) {
-    *label = i + 'a';
+  for (*label = 'a'; *label <= 'h'; (*label)++) {
     draw_text_centered(label, text_point);
     text_point.x += square_size;
   }

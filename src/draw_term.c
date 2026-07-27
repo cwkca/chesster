@@ -47,6 +47,11 @@ int draw_board_term() {
   return 0;
 }
 
+int draw_stats_term() {
+  /* Todo */
+  return 0;
+}
+
 void cleanup_term() {}
 
 /*

@@ -12,6 +12,7 @@ extern SDL_Color square_highlights[64];
 typedef struct {
   int (*draw_screen)();
   int (*draw_board)();
+  int (*draw_stats)();
   void (*cleanup)();
 } DrawAdapter;
 

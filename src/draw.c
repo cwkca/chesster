@@ -22,15 +22,17 @@ const SDL_Color MAGENTA = {0xFF, 0, 0xFF, 0xFF};
 SDL_Color square_highlights[64] = {0};
 
 DrawAdapter TERM_DRAW = {
-    &draw_screen_term,
-    &draw_board_term,
-    &cleanup_term,
+    draw_screen_term,
+    draw_board_term,
+    draw_stats_term,
+    cleanup_term,
 };
 
 DrawAdapter SDL_DRAW = {
-    &draw_screen_sdl,
-    &draw_board_sdl,
-    &cleanup_sdl,
+    draw_screen_sdl,
+    draw_board_sdl,
+    draw_stats_sdl,
+    cleanup_sdl,
 };
 
 DrawAdapter *init_draw() {

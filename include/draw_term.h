@@ -3,6 +3,7 @@
 
 int draw_screen_term();
 int draw_board_term();
+int draw_stats_term();
 void cleanup_term();
 
 #endif /* DRAW_TERM_H */
