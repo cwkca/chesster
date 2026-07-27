@@ -12,12 +12,12 @@
 #include "game.h"
 #include "sdl_util.h"
 
-const SDL_Rect CHESSBOARD_RECT = {60, 40, 480, 480};
+const SDL_Rect CHESSBOARD_RECT = {80, 40, 480, 480};
 const SDL_Color LIGHT_RGB = {200, 160, 130};
 const SDL_Color DARK_RGB = {100, 60, 30};
 
 #define LINE_SPACING 50
-#define MARGIN 20
+#define MARGIN 30
 
 int square_size;
 SDL_Point material_disp[2], control_disp[2];
@@ -51,7 +51,23 @@ int draw_board_sdl() {
   return SDL_UpdateWindowSurface(window);
 }
 
-int update_stats_sdl() { return 0; }
+int update_stats_sdl() {
+  int p;
+  char num[10];
+
+  draw_rect(stats_erase_rect, 0, 0, 0);
+
+  // Todo: choose colors based on comparison
+
+  for (p = 0; p < 2; p++) {
+    sprintf(num, "%d", material[p]);
+    draw_text(num, BLUE, material_disp[p], ALIGN_RIGHT);
+    sprintf(num, "%d", control[p]);
+    draw_text(num, BLUE, control_disp[p], ALIGN_RIGHT);
+  }
+
+  return SDL_UpdateWindowSurface(window);
+}
 
 void cleanup_draw_sdl() { cleanup_sdl(); }
 
@@ -156,7 +172,7 @@ int layout_stats() {
 
   cursor.x = center;
   cursor.y = CHESSBOARD_RECT.y + ((CHESSBOARD_RECT.h + square_size) >> 1);
-  draw_text("Black", GREY, cursor, ALIGN_CENTER);
+  draw_text("Black", BROWN, cursor, ALIGN_CENTER);
 
   cursor.x = left_margin;
   cursor.y += LINE_SPACING;

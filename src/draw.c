@@ -18,6 +18,7 @@ const SDL_Color GREEN = {0, 0xFF, 0, 0xFF};
 const SDL_Color CYAN = {0, 0xFF, 0xFF, 0xFF};
 const SDL_Color BLUE = {0, 0, 0xFF, 0xFF};
 const SDL_Color MAGENTA = {0xFF, 0, 0xFF, 0xFF};
+const SDL_Color BROWN = {0x80, 0x40, 0x20, 0xFF};
 
 SDL_Color square_highlights[64] = {0};
 

@@ -13,6 +13,7 @@ const struct timespec move_delay = {0, 5e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[65];
 const int BOARD_BYTES = sizeof(board);
+int material[2], control[2]; // Todo: add king safety
 
 Vector moves, new_moves, boards;
 ByteSet src_squares;
@@ -38,6 +39,7 @@ char by_castle(Move *m);
 char get_dest_square();
 
 /* Other private functions */
+int update_stats();
 void filter_check(PieceColor color);
 void show_controlled_squares();
 void show_moves();
@@ -70,7 +72,7 @@ int start_game() {
   *move_str = 0;
   move_end = move_str;
 
-  return draw->draw_screen();
+  return draw->draw_screen() || update_stats();
 }
 
 void handle_key(SDL_Keysym keysym) {
@@ -141,12 +143,20 @@ void select_piece(SDL_Keycode key) {
 }
 
 void select_move(SDL_Keycode key) {
+  char complete;
+
   if (key == SDLK_RETURN) {
     if (*move_str == RESTART_KEY)
       start_game();
     else if (moves.size == 1) {
       do_move(board, vector_get(&moves, 0), QUEEN, 0);
-      if (!move_black()) {
+      complete = !move_black();
+      update_stats();
+
+      boards.size = ++move;
+      vector_append(&boards, board);
+
+      if (complete) {
         if (king_in_check(board, P_BLACK)) {
           printf("You win!\n");
           highlight_squares(FULL_BOARD, GREEN);
@@ -154,12 +164,10 @@ void select_move(SDL_Keycode key) {
           printf("Stalemate!\n");
           highlight_squares(FULL_BOARD, GREY);
         }
-        key_handler = NULL;
         draw->draw_board();
+        key_handler = NULL;
         return;
       }
-      boards.size = ++move;
-      vector_append(&boards, board);
     }
   }
 
@@ -238,6 +246,12 @@ char get_dest_square() {
     return ((dest_search[1] - '1') << 3) + (dest_search[0] - 'a');
 
   return -1;
+}
+
+int update_stats() {
+  /* Todo: calculate stats */
+
+  return draw->update_stats();
 }
 
 void filter_check(PieceColor color) {
