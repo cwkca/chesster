@@ -18,10 +18,13 @@ const SDL_Color DARK_RGB = {100, 60, 30};
 
 #define LINE_SPACING 50
 #define MARGIN 30
+#define ERASE_WIDTH 100
+#define ERASE_HEIGHT 150
+#define STAT_TOLERANCE 5
 
 int square_size;
 SDL_Point material_disp[2], control_disp[2];
-SDL_Rect stats_erase_rect;
+SDL_Rect stats_erase_rect[2];
 
 /* Private function prototypes */
 void draw_empty_board();
@@ -29,6 +32,8 @@ void draw_pieces();
 void draw_piece(ColoredPiece piece, int file, int rank);
 int draw_board_labels();
 int layout_stats();
+void calc_colors(int stats[2], SDL_Color colors[2]);
+int abs(int x);
 
 int init_draw_sdl() {
   if (init_sdl())
@@ -52,18 +57,23 @@ int draw_board_sdl() {
 }
 
 int update_stats_sdl() {
-  int p;
-  char num[10];
+  int player;
+  char number[10];
+  SDL_Color material_colors[2], control_colors[2];
 
-  draw_rect(stats_erase_rect, 0, 0, 0);
+  calc_colors(material, material_colors);
+  calc_colors(control, control_colors);
 
-  // Todo: choose colors based on comparison
+  for (player = 0; player < 2; player++) {
+    draw_rect(stats_erase_rect[player], 0, 0, 0);
 
-  for (p = 0; p < 2; p++) {
-    sprintf(num, "%d", material[p]);
-    draw_text(num, BLUE, material_disp[p], ALIGN_RIGHT);
-    sprintf(num, "%d", control[p]);
-    draw_text(num, BLUE, control_disp[p], ALIGN_RIGHT);
+    sprintf(number, "%d", material[player]);
+    draw_text(number, material_colors[player], material_disp[player],
+              ALIGN_RIGHT);
+
+    sprintf(number, "%d", control[player]);
+    draw_text(number, control_colors[player], control_disp[player],
+              ALIGN_RIGHT);
   }
 
   return SDL_UpdateWindowSurface(window);
@@ -186,7 +196,26 @@ int layout_stats() {
   material_disp[0].x = material_disp[1].x = control_disp[0].x =
       control_disp[1].x = right_margin;
 
-  // Todo: set up stats_erase_rect
+  stats_erase_rect[0].x = stats_erase_rect[1].x = WINDOW_RECT.w - ERASE_WIDTH;
+  stats_erase_rect[0].y = CHESSBOARD_RECT.y + square_size;
+  stats_erase_rect[1].y = stats_erase_rect[0].y + (CHESSBOARD_RECT.h >> 1);
+  stats_erase_rect[0].w = stats_erase_rect[1].w = ERASE_WIDTH;
+  stats_erase_rect[0].h = stats_erase_rect[1].h = ERASE_HEIGHT;
 
   return SDL_UpdateWindowSurface(window);
 }
+
+void calc_colors(int stats[2], SDL_Color colors[2]) {
+  int diff = stats[1] - stats[0];
+  if (abs(diff) < STAT_TOLERANCE)
+    colors[0] = colors[1] = YELLOW;
+  else if (diff < 0) {
+    colors[0] = GREEN;
+    colors[1] = RED;
+  } else {
+    colors[0] = RED;
+    colors[1] = GREEN;
+  }
+}
+
+int abs(int x) { return x < 0 ? -x : x; }

@@ -249,7 +249,22 @@ char get_dest_square() {
 }
 
 int update_stats() {
-  /* Todo: calculate stats */
+  int player;
+  Bitboard bit_control;
+  PieceColor color;
+  ColoredPiece *piece, *last_piece = board + 64;
+
+  for (player = 0; player < 2; player++) {
+    color = player << 3;
+
+    material[player] = 0;
+    for (piece = board; piece < last_piece; piece++)
+      if (is_color(*piece, color))
+        material[player] += MATERIAL_VALUES[*piece & PIECE_MASK];
+
+    get_all_moves(board, color, 1, bit_control);
+    control[player] = count_squares(bit_control);
+  }
 
   return draw->update_stats();
 }

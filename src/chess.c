@@ -21,6 +21,8 @@ const char DIRECTIONS[16] = {0, -1, 1,  -1, 1,  0, 1,  1,
 const char KNIGHT_DIRS[16] = {1,  -2, 2,  -1, 2,  1,  1,  2,
                               -1, 2,  -2, 1,  -2, -1, -1, -2};
 
+const int MATERIAL_VALUES[7] = {0, 0, 9, 5, 3, 3, 1};
+
 typedef enum {
   NO_CAPTURE = 1,
   CAPTURE_ENEMY,

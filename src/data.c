@@ -17,7 +17,7 @@ const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 void clear_board(Bitboard board) { memset(board, 0, 8); }
 
 char board_empty(const Bitboard board) {
-  int rank;
+  char rank;
   for (rank = 0; rank < 8; rank++)
     if (board[rank])
       return 0;
@@ -28,8 +28,19 @@ char has_square(Bitboard board, char square) {
   return board[square_rank(square)] & (1 << square_file(square));
 }
 
+char count_squares(Bitboard board) {
+  char rank, mask, count = 0;
+
+  for (rank = 0; rank < 8; rank++)
+    for (mask = 1; mask; mask <<= 1)
+      if (board[rank] & mask)
+        count++;
+
+  return count;
+}
+
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
-  int rank;
+  char rank;
   for (rank = 0; rank < 8; rank++)
     overlap[rank] = a[rank] & b[rank];
 }

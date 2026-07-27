@@ -41,10 +41,8 @@ typedef struct {
   char king_start, rook_start, king_end, rook_end, dir;
 } Castle;
 
-extern const char *PIECE_NAMES;
-extern const char *COLORED_PIECE_NAMES;
-
-extern const char *STARTING_FEN;
+extern const char *PIECE_NAMES, *COLORED_PIECE_NAMES, *STARTING_FEN;
+extern const int MATERIAL_VALUES[7];
 
 void init_chess();
 void cleanup_chess();
