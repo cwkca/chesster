@@ -11,7 +11,7 @@
 #include "draw.h"
 #include "sdl_util.h"
 
-SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
+const SDL_Rect WINDOW_RECT = {100, 100, 800, 600};
 const char *PIECE_IMG_PATH = "assets/pieces/png60";
 const char *FONT_PATH = "assets/fonts/sans.ttf";
 #define PATH_MAX 256
@@ -53,13 +53,22 @@ void draw_rect(SDL_Rect rect, Uint8 r, Uint8 g, Uint8 b) {
   SDL_UpdateWindowSurface(window);
 }
 
-void draw_text_centered(const char *text, SDL_Point point) {
+void draw_text(const char *text, SDL_Color color, SDL_Point point,
+               TextAlign alignment) {
   SDL_Rect textRect = {0};
+  SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, color);
 
-  SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, C_WHITE);
-
-  textRect.x = point.x - (textSurface->w >> 1);
   textRect.y = point.y - (textSurface->h >> 1);
+  textRect.x = point.x;
+  switch (alignment) {
+  case ALIGN_LEFT:
+    break;
+  case ALIGN_CENTER:
+    textRect.x -= (textSurface->w >> 1);
+    break;
+  case ALIGN_RIGHT:
+    textRect.x -= textSurface->w;
+  }
 
   SDL_BlitSurface(textSurface, NULL, winSurface, &textRect);
   SDL_FreeSurface(textSurface);

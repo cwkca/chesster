@@ -12,9 +12,12 @@
 #include "game.h"
 #include "sdl_util.h"
 
-const SDL_Rect CHESSBOARD_RECT = {80, 40, 480, 480};
+const SDL_Rect CHESSBOARD_RECT = {60, 40, 480, 480};
 const SDL_Color LIGHT_RGB = {200, 160, 130};
 const SDL_Color DARK_RGB = {100, 60, 30};
+
+#define LINE_SPACING 50
+#define MARGIN 20
 
 int square_size;
 
@@ -45,7 +48,35 @@ int draw_board_sdl() {
   return SDL_UpdateWindowSurface(window);
 }
 
-int draw_stats_sdl() { return SDL_UpdateWindowSurface(window); }
+int draw_stats_sdl() {
+  SDL_Point cursor;
+  int left_edge = CHESSBOARD_RECT.x + CHESSBOARD_RECT.w;
+  int center = (WINDOW_RECT.w + left_edge) >> 1;
+
+  cursor.x = center;
+  cursor.y = CHESSBOARD_RECT.y + (square_size >> 1);
+  draw_text("White", C_WHITE, cursor, ALIGN_CENTER);
+
+  cursor.x = left_edge + MARGIN;
+  cursor.y += LINE_SPACING;
+  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
+
+  cursor.y += LINE_SPACING;
+  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
+
+  cursor.x = center;
+  cursor.y = CHESSBOARD_RECT.y + ((CHESSBOARD_RECT.h + square_size) >> 1);
+  draw_text("Black", GREY, cursor, ALIGN_CENTER);
+
+  cursor.x = left_edge + MARGIN;
+  cursor.y += LINE_SPACING;
+  draw_text("Material", BLUE, cursor, ALIGN_LEFT);
+
+  cursor.y += LINE_SPACING;
+  draw_text("Control", BLUE, cursor, ALIGN_LEFT);
+
+  return SDL_UpdateWindowSurface(window);
+}
 
 void cleanup_draw_sdl() { cleanup_sdl(); }
 
@@ -116,13 +147,13 @@ int draw_board_labels() {
   text_point.y = CHESSBOARD_RECT.y + (square_size >> 1);
 
   for (*label = '8'; *label > '0'; (*label)--) {
-    draw_text_centered(label, text_point);
+    draw_text(label, C_WHITE, text_point, ALIGN_CENTER);
     text_point.y += square_size;
   }
 
   text_point.x += square_size;
   for (*label = 'a'; *label <= 'h'; (*label)++) {
-    draw_text_centered(label, text_point);
+    draw_text(label, C_WHITE, text_point, ALIGN_CENTER);
     text_point.x += square_size;
   }
 
