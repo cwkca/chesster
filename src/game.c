@@ -21,7 +21,7 @@ ByteSet src_squares;
 #define RESTART_KEY SDLK_BACKSPACE
 #define SHOW_CTRL SDLK_SPACE
 char move_str[MOVE_LEN], *move_end;
-char move, filter_rank, filter_file, dest_square;
+char move, filter_rank, filter_file, filter_castle, dest_square;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -34,6 +34,7 @@ char by_capture(Move *m);
 char by_rank(Move *m);
 char by_file(Move *m);
 char by_dest(Move *m);
+char by_castle(Move *m);
 char get_dest_square();
 
 /* Other private functions */
@@ -167,7 +168,6 @@ void select_move(SDL_Keycode key) {
   if (move_end - move_str < MOVE_LEN && is_move_char(key))
     *(move_end++) = key;
 
-  // Todo: allow selection of queenside castling
   if (key == 'x')
     filter_moves(by_capture);
   else if (is_file(key)) {
@@ -181,6 +181,14 @@ void select_move(SDL_Keycode key) {
       filter_moves(by_dest);
     else
       filter_moves(by_rank);
+  } else if (key == 'o' && *move_str == 'o') {
+    *move_end = 0;
+    filter_castle =
+        strspn(move_str, "o") > 2 ? CASTLE_QUEENSIDE : CASTLE_KINGSIDE;
+
+    clear_vector(&moves);
+    get_castles(board, P_WHITE, &moves);
+    filter_moves(by_castle);
   }
 
   swap_vectors(&moves, &new_moves);
@@ -215,6 +223,11 @@ char by_file(Move *m) {
 }
 
 char by_dest(Move *m) { return m->dest_square == dest_square; }
+
+char by_castle(Move *m) {
+  return square_file(m->dest_square) ==
+         (filter_castle == CASTLE_QUEENSIDE ? 0 : 7);
+}
 
 char get_dest_square() {
   char *dest_search = move_end - 2;
