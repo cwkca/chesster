@@ -35,12 +35,7 @@ int init_draw_sdl() {
   return 0;
 }
 
-int draw_screen_sdl() {
-  if (draw_board_sdl())
-    return 1;
-
-  return draw_board_labels();
-}
+int draw_screen_sdl() { return draw_board_sdl() || draw_board_labels(); }
 
 int draw_board_sdl() {
   draw_empty_board();

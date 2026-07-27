@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DATA_INC_MAGN 3
+#define DATA_INC_MAGN 4
 
 const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
@@ -38,13 +38,13 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
  * Vectors
  */
 
-void init_vector(Vector *v, int elt_size, char capacity) {
+void init_vector(Vector *v, int elt_size, int capacity) {
   assert(elt_size >= 0 && capacity > 0);
 
   for (v->elt_magn = 0, elt_size--; elt_size; v->elt_magn++)
     elt_size >>= 1;
 
-  v->memsize = capacity * (1 << v->elt_magn);
+  v->memsize = capacity << v->elt_magn;
   v->data = malloc(v->memsize);
   if (!v->data) {
     printf("Unable to allocate %d bytes of memory\n", v->memsize);
