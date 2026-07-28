@@ -455,10 +455,21 @@ Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth) {
     target1 = board[move->dest_square];
     do_move(board, move, NONE, 1);
 
-    if (search_depth > 1 &&
-        (response = choose_move(board, opponent, search_depth - 1))) {
-      target2 = board[response->dest_square];
-      do_move(board, response, NONE, 1);
+    if (search_depth > 1) {
+      response = choose_move(board, opponent, search_depth - 1);
+      if (response) {
+        target2 = board[response->dest_square];
+        do_move(board, response, NONE, 1);
+      } else if (king_in_check(board, opponent)) {
+        /* Checkmate */
+        max = move;
+        undo_move(board, move, target1);
+        break;
+      } else {
+        /* Stalemate */
+        undo_move(board, move, target1);
+        continue;
+      }
     }
 
     calc_stats(board, color, &my_stats);
@@ -469,7 +480,7 @@ Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth) {
       max = move;
     }
 
-    if (search_depth > 1 && response)
+    if (search_depth > 1)
       undo_move(board, response, target2);
 
     undo_move(board, move, target1);

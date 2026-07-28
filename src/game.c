@@ -9,7 +9,7 @@
 #include "draw.h"
 #include "game.h"
 
-const struct timespec move_delay = {0, 5e8};
+const struct timespec move_delay = {0, 2e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[65];
 const int BOARD_BYTES = sizeof(board);
@@ -51,7 +51,7 @@ int init_game() {
   if (!draw)
     return 1;
 
-  init_chess(2);
+  init_chess(5);
   init_set(&src_squares, 16);
   init_vector(&moves, sizeof(Move), MOVE_VECTOR_SIZE);
   init_vector(&new_moves, sizeof(Move), MOVE_VECTOR_SIZE);
@@ -300,7 +300,7 @@ char move_black() {
   draw->draw_board();
   nanosleep(&move_delay, NULL);
 
-  m = choose_move(board, P_BLACK, 2);
+  m = choose_move(board, P_BLACK, 3);
   if (m)
     do_move(board, m, QUEEN, 0);
 
