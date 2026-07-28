@@ -40,7 +40,6 @@ char get_dest_square();
 
 /* Other private functions */
 int update_stats();
-void filter_check(PieceColor color);
 void show_controlled_squares();
 void show_moves();
 void do_move(ColoredPiece *board, Move *move, Piece promote, char testing);
@@ -52,11 +51,11 @@ int init_game() {
   if (!draw)
     return 1;
 
-  init_chess();
-  init_set(&src_squares, 20);
-  init_vector(&moves, sizeof(Move), 40);
-  init_vector(&new_moves, sizeof(Move), 40);
-  init_vector(&boards, BOARD_BYTES, 20);
+  init_chess(2);
+  init_set(&src_squares, 16);
+  init_vector(&moves, sizeof(Move), MOVE_VECTOR_SIZE);
+  init_vector(&new_moves, sizeof(Move), MOVE_VECTOR_SIZE);
+  init_vector(&boards, BOARD_BYTES, 50);
 
   return 0;
 }
@@ -132,7 +131,7 @@ void select_piece(SDL_Keycode key) {
     get_castles(board, P_WHITE, &moves);
 
   get_moves_from(board, &src_squares, &moves);
-  filter_check(P_WHITE);
+  filter_check(board, P_WHITE, &moves);
   clear_set(&src_squares);
 
   if (moves.size > 0) {
@@ -256,33 +255,6 @@ int update_stats() {
   return draw->update_stats();
 }
 
-void filter_check(PieceColor color) {
-  clear_vector(&new_moves);
-
-  Move *m;
-  char i, target;
-  for (i = 0; i < moves.size; i++) {
-    m = vector_get(&moves, i);
-
-    // Castles are pre-filtered for check
-    if (is_castle(m)) {
-      vector_append(&new_moves, m);
-      continue;
-    }
-
-    target = board[m->dest_square];
-    do_move(board, m, NONE, 1);
-
-    if (!king_in_check(board, color))
-      vector_append(&new_moves, m);
-
-    board[m->src_square] = board[m->dest_square];
-    board[m->dest_square] = target;
-  }
-
-  swap_vectors(&moves, &new_moves);
-}
-
 void show_controlled_squares() {
   Bitboard white_control;
   Bitboard black_control;
@@ -321,47 +293,16 @@ void show_moves() {
   draw->draw_board();
 }
 
-void do_move(ColoredPiece *board, Move *move, Piece promote, char testing) {
-  char king, rook, dir;
-  ColoredPiece piece;
-  Castle c;
-
-  if (is_castle(move)) {
-    parse_castle(move, &c);
-    board[c.king_end] = board[c.king_start];
-    board[c.rook_end] = board[c.rook_start];
-    board[c.king_start] = board[c.rook_start] = NONE;
-  } else {
-    // Handle normal moves
-    piece = board[move->src_square];
-    board[move->src_square] = NONE;
-    board[move->dest_square] = piece;
-
-    if (promote && (piece & PIECE_MASK) == PAWN &&
-        square_rank(move->dest_square) == 7)
-      board[move->dest_square] = promote | (piece & COLOR_MASK);
-  }
-
-  if (!testing)
-    update_castling_rights(move->src_square & 0x3F);
-}
-
 char move_black() {
+  Move *m;
+
   clear_board_highlights();
   draw->draw_board();
   nanosleep(&move_delay, NULL);
 
-  clear_vector(&src_squares);
-  find_all_pieces(board, P_BLACK, &src_squares);
-  assert(src_squares.size);
+  m = choose_move(board, P_BLACK, 2);
+  if (m)
+    do_move(board, m, QUEEN, 0);
 
-  clear_vector(&moves);
-  get_moves_from(board, &src_squares, &moves);
-  get_castles(board, P_BLACK, &moves);
-  filter_check(P_BLACK);
-
-  if (moves.size)
-    do_move(board, choose_random_elt(&moves), QUEEN, 0);
-
-  return moves.size;
+  return m != NULL;
 }

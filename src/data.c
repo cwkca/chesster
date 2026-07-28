@@ -39,6 +39,18 @@ char count_squares(Bitboard board) {
   return count;
 }
 
+void add_board_to_vector(char src_square, Bitboard move_board,
+                         Vector *move_vector) {
+  char rank, square, mask;
+  Move move;
+  for (rank = square = 0; rank < 8; rank++)
+    for (mask = 1; mask; mask <<= 1, square++)
+      if (move_board[rank] & mask) {
+        move = (Move){src_square, square};
+        vector_append(move_vector, &move);
+      }
+}
+
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
   char rank;
   for (rank = 0; rank < 8; rank++)

@@ -28,6 +28,8 @@ void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
 char has_square(Bitboard board, char square);
 char count_squares(Bitboard board);
+void add_board_to_vector(char src_square, Bitboard move_board,
+                         Vector *move_vector);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
 void init_vector(Vector *vector, int elt_size, int capacity);
@@ -37,6 +39,7 @@ void swap_vectors(Vector *a, Vector *b);
 void *choose_random_elt(Vector *v);
 void cleanup_vector(Vector *v);
 #define clear_vector(v) ((v)->size = 0)
+#define vector_empty(v) ((v)->size == 0)
 
 void init_set(ByteSet *set, char capacity);
 void set_add(ByteSet *set, char elt);

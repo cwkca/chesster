@@ -42,12 +42,14 @@ typedef struct {
 } Castle;
 
 typedef struct {
-  int material, control, safety;
+  int material, control, safety, score;
 } PlayerStats;
 
 extern const char *PIECE_NAMES, *COLORED_PIECE_NAMES, *STARTING_FEN;
 
-void init_chess();
+#define MOVE_VECTOR_SIZE 40
+
+void init_chess(char search_depth);
 void cleanup_chess();
 
 #define is_rank(x) ((x) > '0' && (x) < '9')
@@ -71,17 +73,18 @@ void get_moves(ColoredPiece *board, char square, char for_control,
 void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
 void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
                    Bitboard moves);
+void do_move(ColoredPiece *board, Move *move, Piece promote, char testing);
+void undo_move(ColoredPiece *board, Move *move, ColoredPiece captured);
 
 void get_castles(ColoredPiece *board, PieceColor color, Vector *moves);
 void parse_castle(Move *move, Castle *castle);
-void update_castling_rights(char start_square);
+void update_castling_rights(char start_square, ColoredPiece *rights);
 #define is_castle(move) ((move)->src_square & SPECIAL_MOVE)
 
 char find_king(ColoredPiece *board, PieceColor color);
 char king_in_check(ColoredPiece *board, PieceColor color);
+void filter_check(ColoredPiece *board, PieceColor color, Vector *moves);
 void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats);
-
-void add_board_to_vector(char src_square, Bitboard move_board,
-                         Vector *move_vector);
+Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth);
 
 #endif /* CHESS_H */
