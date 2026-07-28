@@ -41,8 +41,11 @@ typedef struct {
   char king_start, rook_start, king_end, rook_end, dir;
 } Castle;
 
+typedef struct {
+  int material, control, safety;
+} PlayerStats;
+
 extern const char *PIECE_NAMES, *COLORED_PIECE_NAMES, *STARTING_FEN;
-extern const char MATERIAL_VALUES[7], DIRECTIONS[16];
 
 void init_chess();
 void cleanup_chess();
@@ -76,6 +79,7 @@ void update_castling_rights(char start_square);
 
 char find_king(ColoredPiece *board, PieceColor color);
 char king_in_check(ColoredPiece *board, PieceColor color);
+void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats);
 
 void add_board_to_vector(char src_square, Bitboard move_board,
                          Vector *move_vector);

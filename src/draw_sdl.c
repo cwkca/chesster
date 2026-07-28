@@ -32,7 +32,7 @@ void draw_pieces();
 void draw_piece(ColoredPiece piece, int file, int rank);
 int draw_board_labels();
 int layout_stats();
-void calc_stat_colors(int stats[2], SDL_Color colors[2]);
+void calc_stat_colors(int stat0, int stat1, SDL_Color colors[2]);
 int abs(int x);
 
 int init_draw_sdl() {
@@ -61,28 +61,30 @@ int update_stats_sdl() {
   char number[10];
   SDL_Color material_colors[2], control_colors[2], safety_color;
 
-  calc_stat_colors(material, material_colors);
-  calc_stat_colors(control, control_colors);
+  calc_stat_colors(curr_stats[0].material, curr_stats[1].material,
+                   material_colors);
+  calc_stat_colors(curr_stats[0].control, curr_stats[1].control,
+                   control_colors);
 
   for (player = 0; player < 2; player++) {
     draw_rect(stats_erase_rect[player], 0, 0, 0);
 
-    sprintf(number, "%d", material[player]);
+    sprintf(number, "%d", curr_stats[player].material);
     draw_text(number, material_colors[player], material_disp[player],
               ALIGN_RIGHT);
 
-    sprintf(number, "%d", control[player]);
+    sprintf(number, "%d", curr_stats[player].control);
     draw_text(number, control_colors[player], control_disp[player],
               ALIGN_RIGHT);
 
-    if (safety[player] > 20)
+    if (curr_stats[player].safety > 20)
       safety_color = GREEN;
-    else if (safety[player] > 10)
+    else if (curr_stats[player].safety > 10)
       safety_color = YELLOW;
     else
       safety_color = RED;
 
-    sprintf(number, "%d", safety[player]);
+    sprintf(number, "%d", curr_stats[player].safety);
     draw_text(number, safety_color, safety_disp[player], ALIGN_RIGHT);
   }
 
@@ -223,8 +225,8 @@ int layout_stats() {
   return SDL_UpdateWindowSurface(window);
 }
 
-void calc_stat_colors(int stats[2], SDL_Color colors[2]) {
-  int diff = stats[1] - stats[0];
+void calc_stat_colors(int stat0, int stat1, SDL_Color colors[2]) {
+  int diff = stat1 - stat0;
   if (abs(diff) < STAT_TOLERANCE)
     colors[0] = colors[1] = YELLOW;
   else if (diff < 0) {

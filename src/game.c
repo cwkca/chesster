@@ -10,14 +10,10 @@
 #include "game.h"
 
 const struct timespec move_delay = {0, 5e8};
-const char PERIMETER[32] = {0,  2,  1,  2, 2,  2, 2,  1,  2,  0,  2,
-                            -1, 2,  -2, 1, -2, 0, -2, -1, -2, -2, -2,
-                            -2, -1, -2, 0, -2, 1, -2, 2,  -1, 2};
-
 DrawAdapter *draw = NULL;
 ColoredPiece board[65];
 const int BOARD_BYTES = sizeof(board);
-int material[2], control[2], safety[2];
+PlayerStats curr_stats[2];
 
 Vector moves, new_moves, boards;
 ByteSet src_squares;
@@ -255,42 +251,8 @@ char get_dest_square() {
 }
 
 int update_stats() {
-  char player, king_square, rank, file, r, f;
-  const char *dir;
-  Bitboard bit_control;
-  PieceColor color;
-  ColoredPiece *piece, *last_piece = board + 64;
-
-  for (player = 0; player < 2; player++) {
-    color = player << 3;
-
-    material[player] = 0;
-    for (piece = board; piece < last_piece; piece++)
-      if (is_color(*piece, color))
-        material[player] += MATERIAL_VALUES[*piece & PIECE_MASK];
-
-    get_all_moves(board, color, 1, bit_control);
-    control[player] = count_squares(bit_control);
-
-    king_square = find_king(board, color);
-    rank = square_rank(king_square);
-    file = square_file(king_square);
-
-    safety[player] = king_in_check(board, color) ? -50 : 0;
-    for (dir = DIRECTIONS; (dir - DIRECTIONS) < 16; dir += 2) {
-      r = rank + dir[0];
-      f = file + dir[1];
-      if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
-        safety[player] += 2;
-    }
-    for (dir = PERIMETER; (dir - PERIMETER) < 32; dir += 2) {
-      r = rank + dir[0];
-      f = file + dir[1];
-      if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
-        safety[player]++;
-    }
-  }
-
+  calc_stats(board, P_WHITE, curr_stats);
+  calc_stats(board, P_BLACK, curr_stats + 1);
   return draw->update_stats();
 }
 

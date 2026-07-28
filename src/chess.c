@@ -23,6 +23,10 @@ const char DIRECTIONS[16] = {0, -1, 1,  -1, 1,  0, 1,  1,
 const char KNIGHT_DIRS[16] = {1,  -2, 2,  -1, 2,  1,  1,  2,
                               -1, 2,  -2, 1,  -2, -1, -1, -2};
 
+const char PERIMETER[32] = {0,  2,  1,  2, 2,  2, 2,  1,  2,  0,  2,
+                            -1, 2,  -2, 1, -2, 0, -2, -1, -2, -2, -2,
+                            -2, -1, -2, 0, -2, 1, -2, 2,  -1, 2};
+
 typedef enum {
   NO_CAPTURE = 1,
   CAPTURE_ENEMY,
@@ -314,6 +318,39 @@ char king_in_check(ColoredPiece *board, PieceColor color) {
   Bitboard opponent_moves;
   get_all_moves(board, color ^ COLOR_MASK, 1, opponent_moves);
   return has_square(opponent_moves, find_king(board, color));
+}
+
+void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats) {
+  char player, king_square, rank, file, r, f;
+  const char *dir;
+  Bitboard bit_control;
+  ColoredPiece *piece, *last_piece = board + 64;
+
+  stats->material = 0;
+  for (piece = board; piece < last_piece; piece++)
+    if (is_color(*piece, color))
+      stats->material += MATERIAL_VALUES[*piece & PIECE_MASK];
+
+  get_all_moves(board, color, 1, bit_control);
+  stats->control = count_squares(bit_control);
+
+  king_square = find_king(board, color);
+  rank = square_rank(king_square);
+  file = square_file(king_square);
+
+  stats->safety = king_in_check(board, color) ? -50 : 0;
+  for (dir = DIRECTIONS; (dir - DIRECTIONS) < 16; dir += 2) {
+    r = rank + dir[0];
+    f = file + dir[1];
+    if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
+      stats->safety += 2;
+  }
+  for (dir = PERIMETER; (dir - PERIMETER) < 32; dir += 2) {
+    r = rank + dir[0];
+    f = file + dir[1];
+    if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
+      stats->safety++;
+  }
 }
 
 void add_board_to_vector(char src_square, Bitboard move_board,
