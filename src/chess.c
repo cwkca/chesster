@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "chess.h"
+#include "debug.h"
 #include "game.h"
 
 const char *PIECE_NAMES = "_kqrbnp_";
@@ -139,7 +140,7 @@ int load_fen(const char *fen) {
 void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares) {
   char square;
   for (square = 0; square < 64; square++)
-    if ((board[square] & COLOR_MASK) == color)
+    if (is_color(board[square], color))
       set_add(squares, square);
 }
 
@@ -167,6 +168,7 @@ void get_moves(ColoredPiece *board, char square, char for_control,
   assert(square >= 0);
 
   ColoredPiece piece = board[square];
+  assert(piece);
   PieceColor color = piece & COLOR_MASK;
   char rank = square_rank(square), file = square_file(square);
 
@@ -220,6 +222,10 @@ void get_moves(ColoredPiece *board, char square, char for_control,
         check_move(board, square, NO_CAPTURE, rank + forward + forward, file,
                    moves);
     }
+    break;
+
+  default:
+    throw("Unrecognized piece");
   }
 }
 
@@ -548,7 +554,7 @@ char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
     break;
 
   default:
-    printf("Invalid capture mode %d\n", capture);
+    throw("Invalid capture mode");
   }
 
   moves[rank] |= (1 << file);
@@ -584,5 +590,8 @@ char can_castle(ColoredPiece *board, char row_offset, Bitboard opponent_moves,
         return 0;
 
     return 1;
+
+  default:
+    throw("Invalid castle side");
   }
 }

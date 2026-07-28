@@ -1,7 +1,7 @@
 /** Game flow and UI logic. */
 
 #include <assert.h>
-#include <stdlib.h> /* srand */
+#include <stdlib.h>
 #include <string.h>
 #include <time.h> /* nanosleep, time */
 
@@ -23,6 +23,10 @@ ByteSet src_squares;
 #define SHOW_CTRL SDLK_SPACE
 char move_str[MOVE_LEN], *move_end;
 char move, filter_rank, filter_file, filter_castle, dest_square;
+
+#define MAX_SEARCH_DEPTH 5
+#define DEFAULT_SEARCH_DEPTH 2
+int search_depth = DEFAULT_SEARCH_DEPTH;
 
 /* Key handlers */
 void select_piece(SDL_Keycode key);
@@ -47,15 +51,25 @@ char move_black();
 
 int init_game() {
   srand(time(NULL));
+
   draw = init_draw();
   if (!draw)
     return 1;
 
-  init_chess(5);
+  init_chess(MAX_SEARCH_DEPTH + 1);
   init_set(&src_squares, 16);
   init_vector(&moves, sizeof(Move), MOVE_VECTOR_SIZE);
   init_vector(&new_moves, sizeof(Move), MOVE_VECTOR_SIZE);
   init_vector(&boards, BOARD_BYTES, 50);
+
+  char *depth_str = getenv("CHESSTER_DEPTH");
+  if (depth_str) {
+    search_depth = strtol(depth_str, NULL, 10);
+    if (search_depth > MAX_SEARCH_DEPTH || search_depth < 1) {
+      printf("Invalid search depth %d\n", search_depth);
+      search_depth = DEFAULT_SEARCH_DEPTH;
+    }
+  }
 
   return 0;
 }
@@ -300,7 +314,7 @@ char move_black() {
   draw->draw_board();
   nanosleep(&move_delay, NULL);
 
-  m = choose_move(board, P_BLACK, 3);
+  m = choose_move(board, P_BLACK, search_depth);
   if (m)
     do_move(board, m, QUEEN, 0);
 

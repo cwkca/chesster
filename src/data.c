@@ -149,7 +149,8 @@ void set_add(ByteSet *set, char elt) {
   if (set_contains(set, elt))
     return;
 
-  assert(set->size <= set->capacity);
+  assert(set->size < set->capacity);
+  /* Sets should not need resizing
   if (set->size == set->capacity) {
     int new_capacity = set->capacity + (1 << DATA_INC_MAGN);
     char *new_bytes = realloc(set->bytes, new_capacity);
@@ -162,7 +163,7 @@ void set_add(ByteSet *set, char elt) {
            new_capacity);
     set->bytes = new_bytes;
     set->capacity = new_capacity;
-  }
+  } */
 
   set->bytes[set->size++] = elt;
 }

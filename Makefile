@@ -1,6 +1,7 @@
 .PHONY: all native web run-native run-web
 
-CFLAGS=-ansi -Iinclude `sdl2-config --cflags`
+DEBUG_FLAGS=-g -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls
+CFLAGS=-ansi $(DEBUG_FLAGS) -Iinclude `sdl2-config --cflags`
 BUILD_PATH=build
 
 all: native web
@@ -10,7 +11,7 @@ all: native web
 #
 
 CC=clang
-LDFLAGS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
+LDFLAGS = $(DEBUG_FLAGS) `sdl2-config --libs` -lSDL2_ttf -lSDL2_image
 NATIVE_BUILD=$(BUILD_PATH)/native
 NATIVE_OBJ_PATH=$(NATIVE_BUILD)/obj
 NATIVE_OBJS = $(shell ls src | sed 's|\(.*\)\.c|$(NATIVE_OBJ_PATH)/\1.o|g') $(NATIVE_OBJ_PATH)/main.o

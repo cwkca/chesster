@@ -8,6 +8,7 @@
 #include <SDL_ttf.h>
 
 #include "chess.h"
+#include "debug.h"
 #include "draw.h"
 #include "sdl_util.h"
 
@@ -63,11 +64,17 @@ void draw_text(const char *text, SDL_Color color, SDL_Point point,
   switch (alignment) {
   case ALIGN_LEFT:
     break;
+
   case ALIGN_CENTER:
     textRect.x -= (textSurface->w >> 1);
     break;
+
   case ALIGN_RIGHT:
     textRect.x -= textSurface->w;
+    break;
+
+  default:
+    throw("Invalid alignment");
   }
 
   SDL_BlitSurface(textSurface, NULL, winSurface, &textRect);
