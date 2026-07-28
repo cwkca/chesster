@@ -10,10 +10,14 @@
 #include "game.h"
 
 const struct timespec move_delay = {0, 5e8};
+const char PERIMETER[32] = {0,  2,  1,  2, 2,  2, 2,  1,  2,  0,  2,
+                            -1, 2,  -2, 1, -2, 0, -2, -1, -2, -2, -2,
+                            -2, -1, -2, 0, -2, 1, -2, 2,  -1, 2};
+
 DrawAdapter *draw = NULL;
 ColoredPiece board[65];
 const int BOARD_BYTES = sizeof(board);
-int material[2], control[2]; // Todo: add king safety
+int material[2], control[2], safety[2];
 
 Vector moves, new_moves, boards;
 ByteSet src_squares;
@@ -106,11 +110,13 @@ void select_piece(SDL_Keycode key) {
   move_end = move_str;
   *(move_end++) = key;
 
-  if (key == SDLK_LEFT && move > 0)
+  if (key == SDLK_LEFT && move > 0) {
     memcpy(board, vector_get(&boards, --move), BOARD_BYTES);
-  else if (key == SDLK_RIGHT && move < boards.size - 1)
+    update_stats();
+  } else if (key == SDLK_RIGHT && move < boards.size - 1) {
     memcpy(board, vector_get(&boards, ++move), BOARD_BYTES);
-  else if (key == SHOW_CTRL) {
+    update_stats();
+  } else if (key == SHOW_CTRL) {
     show_controlled_squares();
     return;
   } else if (key == RESTART_KEY) {
@@ -249,7 +255,8 @@ char get_dest_square() {
 }
 
 int update_stats() {
-  int player;
+  char player, king_square, rank, file, r, f;
+  const char *dir;
   Bitboard bit_control;
   PieceColor color;
   ColoredPiece *piece, *last_piece = board + 64;
@@ -264,6 +271,24 @@ int update_stats() {
 
     get_all_moves(board, color, 1, bit_control);
     control[player] = count_squares(bit_control);
+
+    king_square = find_king(board, color);
+    rank = square_rank(king_square);
+    file = square_file(king_square);
+
+    safety[player] = king_in_check(board, color) ? -50 : 0;
+    for (dir = DIRECTIONS; (dir - DIRECTIONS) < 16; dir += 2) {
+      r = rank + dir[0];
+      f = file + dir[1];
+      if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
+        safety[player] += 2;
+    }
+    for (dir = PERIMETER; (dir - PERIMETER) < 32; dir += 2) {
+      r = rank + dir[0];
+      f = file + dir[1];
+      if (!in_bounds(r, f) || is_color(board[(r << 3) + f], color))
+        safety[player]++;
+    }
   }
 
   return draw->update_stats();

@@ -42,7 +42,7 @@ typedef struct {
 } Castle;
 
 extern const char *PIECE_NAMES, *COLORED_PIECE_NAMES, *STARTING_FEN;
-extern const int MATERIAL_VALUES[7];
+extern const char MATERIAL_VALUES[7], DIRECTIONS[16];
 
 void init_chess();
 void cleanup_chess();
@@ -62,6 +62,7 @@ void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares);
 void find_file_pawns(ColoredPiece *board, PieceColor color, char file,
                      ByteSet *squares);
 
+char in_bounds(char rank, char file);
 void get_moves(ColoredPiece *board, char square, char for_control,
                Bitboard moves);
 void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
@@ -73,6 +74,7 @@ void parse_castle(Move *move, Castle *castle);
 void update_castling_rights(char start_square);
 #define is_castle(move) ((move)->src_square & SPECIAL_MOVE)
 
+char find_king(ColoredPiece *board, PieceColor color);
 char king_in_check(ColoredPiece *board, PieceColor color);
 
 void add_board_to_vector(char src_square, Bitboard move_board,
