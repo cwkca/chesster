@@ -243,9 +243,8 @@ void get_moves_from(ColoredPiece *board, ByteSet *squares, Vector *moves) {
 
 void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
                    Bitboard moves) {
+  char sq;
   clear_board(moves);
-
-  int sq;
   for (sq = 0; sq < 64; sq++)
     if (is_color(board[sq], color))
       get_moves(board, sq, for_control, moves);
@@ -401,7 +400,7 @@ void filter_check(ColoredPiece *board, PieceColor color, Vector *moves) {
 }
 
 void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats) {
-  char player, king_square, rank, file, r, f;
+  char player, king_square, rank, file, r, f, mask;
   const char *dir;
   Bitboard bit_control;
   ColoredPiece *piece, *last_piece = board + 64;
@@ -412,7 +411,18 @@ void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats) {
       stats->material += MATERIAL_VALUES[*piece & PIECE_MASK];
 
   get_all_moves(board, color, 1, bit_control);
-  stats->control = count_squares(bit_control);
+
+  stats->control = 0;
+  for (rank = 0; rank < 8; rank++) {
+    for (mask = 1; mask; mask <<= 1)
+      if (bit_control[rank] & mask)
+        stats->control++;
+
+    if (rank > 1 && rank < 6)
+      for (mask = 4; mask & 0x3C; mask <<= 1)
+        if (bit_control[rank] & mask)
+          stats->control++;
+  }
 
   king_square = find_king(board, color);
   rank = square_rank(king_square);

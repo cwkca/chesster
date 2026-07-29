@@ -28,17 +28,6 @@ char has_square(Bitboard board, char square) {
   return board[square_rank(square)] & (1 << square_file(square));
 }
 
-char count_squares(Bitboard board) {
-  char rank, mask, count = 0;
-
-  for (rank = 0; rank < 8; rank++)
-    for (mask = 1; mask; mask <<= 1)
-      if (board[rank] & mask)
-        count++;
-
-  return count;
-}
-
 void add_board_to_vector(char src_square, Bitboard move_board,
                          Vector *move_vector) {
   char rank, square, mask;

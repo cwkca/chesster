@@ -27,7 +27,6 @@ typedef struct {
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
 char has_square(Bitboard board, char square);
-char count_squares(Bitboard board);
 void add_board_to_vector(char src_square, Bitboard move_board,
                          Vector *move_vector);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
