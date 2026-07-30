@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DATA_INC_MAGN 4
-
 const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 /*
@@ -53,13 +51,11 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
 void vector_init(Vector *v, int elt_size, int capacity) {
   assert(elt_size >= 0 && capacity > 0);
 
-  for (v->elt_magn = 0, elt_size--; elt_size; v->elt_magn++)
-    elt_size >>= 1;
-
-  v->memsize = capacity << v->elt_magn;
-  v->data = malloc(v->memsize);
+  v->elt_size = elt_size;
+  int memsize = capacity * elt_size;
+  v->data = malloc(memsize);
   if (!v->data) {
-    printf("Unable to allocate %d bytes of memory\n", v->memsize);
+    printf("Unable to allocate %d bytes of memory\n", memsize);
     exit(1);
   }
 
@@ -73,30 +69,27 @@ void *vector_get(Vector *v, int i) {
     exit(1);
   }
 
-  return v->data + (i << v->elt_magn);
+  return v->data + (i * v->elt_size);
 }
 
 void vector_append(Vector *v, void *elt) {
+  int last;
   assert(v->size <= v->capacity);
 
   if (v->size == v->capacity) {
-    int new_memsize = v->memsize + (1 << (v->elt_magn + DATA_INC_MAGN));
-    void *new_data = realloc(v->data, new_memsize);
-    if (!new_data) {
-      printf("Unable to allocate %d bytes of memory\n", new_memsize);
+    int memsize = v->size * v->capacity << 1;
+    v->data = realloc(v->data, memsize);
+    if (!v->data) {
+      printf("Unable to allocate %d bytes of memory\n", memsize);
       exit(1);
     }
 
-    v->data = new_data;
-    v->memsize = new_memsize;
-
-    int new_capacity = v->capacity + (1 << DATA_INC_MAGN);
-    printf("Increasing vector capacity from %d to %d\n", v->capacity,
-           new_capacity);
-    v->capacity = new_capacity;
+    v->capacity <<= 1;
+    printf("Doubling vector capacity to %d\n", v->capacity);
   }
 
-  memcpy(v->data + (v->size++ << v->elt_magn), elt, 1 << v->elt_magn);
+  last = v->size++;
+  memcpy(vector_get(v, last), elt, v->elt_size);
 }
 
 void vector_swap(Vector *a, Vector *b) {
@@ -113,7 +106,7 @@ void vector_cleanup(Vector *v) {
   if (v->data) {
     free(v->data);
     v->data = NULL;
-    v->size = v->capacity = v->memsize = 0;
+    v->size = v->capacity = v->elt_size = 0;
   }
 }
 

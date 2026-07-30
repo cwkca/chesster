@@ -15,8 +15,7 @@ typedef struct {
 
 typedef struct {
   void *data;
-  int size, capacity, memsize;
-  char elt_magn;
+  int size, capacity, elt_size;
 } Vector;
 
 typedef struct {
