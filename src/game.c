@@ -25,7 +25,7 @@ char move_str[MOVE_LEN], *move_end;
 char move, filter_rank, filter_file, filter_castle, dest_square;
 
 #define MAX_SEARCH_DEPTH 5
-#define DEFAULT_SEARCH_DEPTH 2
+#define DEFAULT_SEARCH_DEPTH 3
 int search_depth = DEFAULT_SEARCH_DEPTH;
 
 /* Key handlers */

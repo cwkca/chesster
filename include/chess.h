@@ -47,7 +47,7 @@ typedef struct {
 
 extern const char *PIECE_NAMES, *COLORED_PIECE_NAMES, *STARTING_FEN;
 
-#define MOVE_VECTOR_SIZE 40
+#define MOVE_VECTOR_SIZE 80
 
 void init_chess(char search_depth);
 void cleanup_chess();

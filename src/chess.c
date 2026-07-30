@@ -255,8 +255,9 @@ void get_all_moves(const ColoredPiece *board, PieceColor color,
 }
 
 void do_move(ColoredPiece *board, Move *move, Piece promote, char testing) {
-  char king, rook, dir;
+  char king, rook, dir, promo_rank;
   ColoredPiece piece;
+  PieceColor color;
   Castle c;
 
   if (is_castle(move)) {
@@ -267,12 +268,14 @@ void do_move(ColoredPiece *board, Move *move, Piece promote, char testing) {
   } else {
     // Handle normal moves
     piece = board[move->src_square];
+    color = piece & COLOR_MASK;
     board[move->src_square] = NONE;
     board[move->dest_square] = piece;
 
+    promo_rank = color == P_WHITE ? 7 : 0;
     if (promote && (piece & PIECE_MASK) == PAWN &&
-        square_rank(move->dest_square) == 7)
-      board[move->dest_square] = promote | (piece & COLOR_MASK);
+        square_rank(move->dest_square) == promo_rank)
+      board[move->dest_square] = promote | color;
   }
 
   if (!testing)
@@ -305,7 +308,7 @@ void get_castles(const ColoredPiece *board, PieceColor color, Vector *moves) {
     return;
 
   get_all_moves(board, color ^ COLOR_MASK, 1, opponent_moves);
-  castle.src_square = (color == P_BLACK ? 56 : 4) | SPECIAL_MOVE;
+  castle.src_square = (color == P_BLACK ? 60 : 4) | SPECIAL_MOVE;
 
   if ((rights & CASTLE_QUEENSIDE) &&
       can_castle(board, row_offset, opponent_moves, CASTLE_QUEENSIDE)) {

@@ -1,15 +1,18 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifndef __EMSCRIPTEN__
+
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 const int HANDLED_SIGNALS[] = {SIGQUIT, SIGILL,  SIGABRT, SIGFPE,
                                SIGSEGV, SIGTERM, 0};
 
 #define MAX_STACK_DEPTH 20
-#define SKIP_FRAMES 5
+#define SKIP_FRAMES 3
 
 void handle_signal(int sig);
 
@@ -36,13 +39,15 @@ int enable_stack_traces() {
   return 0;
 }
 
-void throw(const char *error) {
-  printf("%s\n", error);
-  abort();
-}
-
 void handle_signal(int sig) {
   print_call_stack();
   signal(sig, SIG_DFL);
   raise(sig);
+}
+
+#endif /* __EMSCRIPTEN__ */
+
+void throw(const char *error) {
+  printf("%s\n", error);
+  abort();
 }
