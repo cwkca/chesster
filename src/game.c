@@ -179,6 +179,21 @@ void select_move(SDL_Keycode key) {
           printf("Stalemate!\n");
           highlight_squares(FULL_BOARD, GREY);
         }
+      } else {
+        get_legal_moves(board, P_WHITE, &moves);
+        if (vector_empty(&moves)) {
+          complete = 1;
+          if (king_in_check(board, P_WHITE)) {
+            printf("You lose!\n");
+            highlight_squares(FULL_BOARD, RED);
+          } else {
+            printf("Stalemate!\n");
+            highlight_squares(FULL_BOARD, GREY);
+          }
+        }
+      }
+
+      if (complete) {
         draw->draw_board();
         key_handler = NULL;
         return;

@@ -36,7 +36,7 @@ typedef enum {
 } CaptureMode;
 
 ByteSet squares;
-Vector move_searches;
+Vector move_searches, temp_moves;
 
 /* Private function prototypes */
 int safe_get_lut_index(char piece);
@@ -67,6 +67,8 @@ void init_chess(char search_depth) {
   for (vec = 0; vec < search_depth + 1; vec++)
     vector_init(vector_get(&move_searches, vec), sizeof(Move),
                 MOVE_VECTOR_SIZE);
+
+  vector_init(&temp_moves, sizeof(Move), MOVE_VECTOR_SIZE);
 }
 
 void cleanup_chess() {
@@ -77,6 +79,8 @@ void cleanup_chess() {
   for (v = 0; v < move_searches.size; v++)
     vector_cleanup(vector_get(&move_searches, v));
   vector_cleanup(&move_searches);
+
+  vector_cleanup(&temp_moves);
 }
 
 char is_color(ColoredPiece piece, PieceColor color) {
@@ -252,6 +256,18 @@ void get_all_moves(const ColoredPiece *board, PieceColor color,
   for (sq = 0; sq < 64; sq++)
     if (is_color(board[sq], color))
       get_moves(board, sq, for_control, moves);
+}
+
+void get_legal_moves(ColoredPiece *board, PieceColor color, Vector *moves) {
+  set_clear(&squares);
+  vector_clear(moves);
+
+  find_all_pieces(board, color, &squares);
+  assert(squares.size);
+
+  get_moves_from(board, &squares, moves);
+  get_castles(board, color, moves);
+  filter_check(board, color, moves);
 }
 
 void do_move(ColoredPiece *board, Move *move, Piece promote, char testing) {
@@ -435,7 +451,18 @@ void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats) {
   rank = square_rank(king_square);
   file = square_file(king_square);
 
-  stats->safety = king_in_check(board, color) ? -10 : 0;
+  stats->safety = 0;
+  if (king_in_check(board, color)) {
+    stats->safety = -10;
+
+    get_legal_moves(board, color, &temp_moves);
+    if (vector_empty(&temp_moves)) {
+      // Checkmate!
+      stats->score = -1000;
+      return;
+    }
+  }
+
   for (dir = DIRECTIONS; (dir - DIRECTIONS) < 16; dir += 2) {
     r = rank + dir[0];
     f = file + dir[1];
@@ -459,15 +486,7 @@ Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth) {
   PieceColor opponent = color ^ COLOR_MASK;
   Vector *moves = vector_get(&move_searches, search_depth);
 
-  set_clear(&squares);
-  vector_clear(moves);
-
-  find_all_pieces(board, color, &squares);
-  assert(squares.size);
-  get_moves_from(board, &squares, moves);
-  get_castles(board, color, moves);
-  filter_check(board, color, moves);
-
+  get_legal_moves(board, color, moves);
   if (vector_empty(moves))
     return NULL;
   if (moves->size == 1)
