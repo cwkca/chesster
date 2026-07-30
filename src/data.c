@@ -50,7 +50,7 @@ void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap) {
  * Vectors
  */
 
-void init_vector(Vector *v, int elt_size, int capacity) {
+void vector_init(Vector *v, int elt_size, int capacity) {
   assert(elt_size >= 0 && capacity > 0);
 
   for (v->elt_magn = 0, elt_size--; elt_size; v->elt_magn++)
@@ -67,7 +67,7 @@ void init_vector(Vector *v, int elt_size, int capacity) {
   v->capacity = capacity;
 }
 
-void *vector_get(Vector *v, char i) {
+void *vector_get(Vector *v, int i) {
   if (i < 0 || i >= v->size) {
     printf("Vector index %d out of bounds (size %d)\n", i, v->size);
     exit(1);
@@ -99,17 +99,17 @@ void vector_append(Vector *v, void *elt) {
   memcpy(v->data + (v->size++ << v->elt_magn), elt, 1 << v->elt_magn);
 }
 
-void swap_vectors(Vector *a, Vector *b) {
+void vector_swap(Vector *a, Vector *b) {
   Vector temp = *a;
   *a = *b;
   *b = temp;
 }
 
-void *choose_random_elt(Vector *v) {
+void *vector_random_elt(Vector *v) {
   return v->size ? vector_get(v, rand() % v->size) : NULL;
 }
 
-void cleanup_vector(Vector *v) {
+void vector_cleanup(Vector *v) {
   if (v->data) {
     free(v->data);
     v->data = NULL;
@@ -121,7 +121,7 @@ void cleanup_vector(Vector *v) {
  * Byte sets
  */
 
-void init_set(ByteSet *set, char capacity) {
+void set_init(ByteSet *set, char capacity) {
   assert(capacity > 0);
 
   set->bytes = malloc(capacity);
@@ -165,7 +165,7 @@ char set_contains(ByteSet *set, char elt) {
   return 0;
 }
 
-void cleanup_set(ByteSet *set) {
+void set_cleanup(ByteSet *set) {
   if (set->bytes) {
     free(set->bytes);
     set->bytes = NULL;

@@ -41,13 +41,13 @@ Vector move_searches;
 /* Private function prototypes */
 int safe_get_lut_index(char piece);
 void report_fen_error(const char *fen, int index);
-void get_slider_moves(ColoredPiece *board, int src_square, CaptureMode capture,
-                      int rank, int file, int dir_offset, int dir_inc,
-                      Bitboard moves);
-char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
+void get_slider_moves(const ColoredPiece *board, int src_square,
+                      CaptureMode capture, int rank, int file, int dir_offset,
+                      int dir_inc, Bitboard moves);
+char check_move(const ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves);
-char can_castle(ColoredPiece *board, char row_offset, Bitboard opponent_moves,
-                CastleSide side);
+char can_castle(const ColoredPiece *board, char row_offset,
+                Bitboard opponent_moves, CastleSide side);
 
 void init_chess(char search_depth) {
   int lut_index, piece_index, vec;
@@ -61,21 +61,22 @@ void init_chess(char search_depth) {
     PIECE_LOOKUP[lut_index] = piece_index;
   }
 
-  init_set(&squares, 16);
-  init_vector(&move_searches, sizeof(Vector), search_depth + 1);
+  set_init(&squares, 16);
+  vector_init(&move_searches, sizeof(Vector), search_depth + 1);
   move_searches.size = search_depth + 1;
   for (vec = 0; vec < search_depth + 1; vec++)
-    init_vector(vector_get(&move_searches, vec), sizeof(Move),
+    vector_init(vector_get(&move_searches, vec), sizeof(Move),
                 MOVE_VECTOR_SIZE);
 }
 
 void cleanup_chess() {
   int v;
 
-  cleanup_set(&squares);
+  set_cleanup(&squares);
+
   for (v = 0; v < move_searches.size; v++)
-    cleanup_vector(vector_get(&move_searches, v));
-  cleanup_vector(&move_searches);
+    vector_cleanup(vector_get(&move_searches, v));
+  vector_cleanup(&move_searches);
 }
 
 char is_color(ColoredPiece piece, PieceColor color) {
@@ -137,21 +138,23 @@ int load_fen(const char *fen) {
   return 0;
 }
 
-void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares) {
+void find_all_pieces(const ColoredPiece *board, PieceColor color,
+                     ByteSet *squares) {
   char square;
   for (square = 0; square < 64; square++)
     if (is_color(board[square], color))
       set_add(squares, square);
 }
 
-void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares) {
+void find_pieces(const ColoredPiece *board, ColoredPiece piece,
+                 ByteSet *squares) {
   char square;
   for (square = 0; square < 64; square++)
     if (board[square] == piece)
       set_add(squares, square);
 }
 
-void find_file_pawns(ColoredPiece *board, PieceColor color, char file,
+void find_file_pawns(const ColoredPiece *board, PieceColor color, char file,
                      ByteSet *squares) {
   char square;
   for (square = file; square < 64; square += 8)
@@ -163,7 +166,7 @@ char in_bounds(char rank, char file) {
   return rank >= 0 && rank < 8 && file >= 0 && file < 8;
 }
 
-void get_moves(ColoredPiece *board, char square, char for_control,
+void get_moves(const ColoredPiece *board, char square, char for_control,
                Bitboard moves) {
   assert(square >= 0);
 
@@ -229,7 +232,8 @@ void get_moves(ColoredPiece *board, char square, char for_control,
   }
 }
 
-void get_moves_from(ColoredPiece *board, ByteSet *squares, Vector *moves) {
+void get_moves_from(const ColoredPiece *board, ByteSet *squares,
+                    Vector *moves) {
   Bitboard bit_moves;
   char i, square;
 
@@ -241,8 +245,8 @@ void get_moves_from(ColoredPiece *board, ByteSet *squares, Vector *moves) {
   }
 }
 
-void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
-                   Bitboard moves) {
+void get_all_moves(const ColoredPiece *board, PieceColor color,
+                   char for_control, Bitboard moves) {
   char sq;
   clear_board(moves);
   for (sq = 0; sq < 64; sq++)
@@ -289,7 +293,7 @@ void undo_move(ColoredPiece *board, Move *move, ColoredPiece captured) {
   }
 }
 
-void get_castles(ColoredPiece *board, PieceColor color, Vector *moves) {
+void get_castles(const ColoredPiece *board, PieceColor color, Vector *moves) {
   Bitboard opponent_moves;
   Move castle;
   char king_square = 4, rights = board[64];
@@ -316,7 +320,7 @@ void get_castles(ColoredPiece *board, PieceColor color, Vector *moves) {
   }
 }
 
-void parse_castle(Move *m, Castle *c) {
+void parse_castle(const Move *m, Castle *c) {
   assert(is_castle(m));
 
   c->king_start = m->src_square & 0x3F;
@@ -354,21 +358,21 @@ void update_castling_rights(char start_square, ColoredPiece *rights) {
   }
 }
 
-char find_king(ColoredPiece *board, PieceColor color) {
+char find_king(const ColoredPiece *board, PieceColor color) {
   char king_square;
 
-  clear_set(&squares);
+  set_clear(&squares);
   find_pieces(board, KING | color, &squares);
   assert(squares.size == 1);
   king_square = squares.bytes[0];
 
-  clear_set(&squares);
+  set_clear(&squares);
   return king_square;
 }
 
-char king_in_check(ColoredPiece *board, PieceColor color) {
+char king_in_check(const ColoredPiece *board, PieceColor color) {
   Bitboard opponent_moves;
-  get_all_moves(board, color ^ COLOR_MASK, 1, opponent_moves);
+  get_all_moves(board, color ^ COLOR_MASK, 0, opponent_moves);
   return has_square(opponent_moves, find_king(board, color));
 }
 
@@ -376,7 +380,7 @@ void filter_check(ColoredPiece *board, PieceColor color, Vector *moves) {
   Move *m;
   char i, target;
   Vector *new_moves = vector_get(&move_searches, 0);
-  clear_vector(new_moves);
+  vector_clear(new_moves);
 
   for (i = 0; i < moves->size; i++) {
     m = vector_get(moves, i);
@@ -396,7 +400,7 @@ void filter_check(ColoredPiece *board, PieceColor color, Vector *moves) {
     undo_move(board, m, target);
   }
 
-  swap_vectors(moves, new_moves);
+  vector_swap(moves, new_moves);
 }
 
 void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats) {
@@ -452,8 +456,8 @@ Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth) {
   PieceColor opponent = color ^ COLOR_MASK;
   Vector *moves = vector_get(&move_searches, search_depth);
 
-  clear_set(&squares);
-  clear_vector(moves);
+  set_clear(&squares);
+  vector_clear(moves);
 
   find_all_pieces(board, color, &squares);
   assert(squares.size);
@@ -519,9 +523,9 @@ void report_fen_error(const char *fen, int index) {
   printf("%*s^\n", (int)(4 + index), "");
 }
 
-void get_slider_moves(ColoredPiece *board, int src_square, CaptureMode capture,
-                      int rank, int file, int dir_offset, int dir_inc,
-                      Bitboard moves) {
+void get_slider_moves(const ColoredPiece *board, int src_square,
+                      CaptureMode capture, int rank, int file, int dir_offset,
+                      int dir_inc, Bitboard moves) {
   int r, f;
   const char *dir;
 
@@ -536,7 +540,7 @@ void get_slider_moves(ColoredPiece *board, int src_square, CaptureMode capture,
 }
 
 /* Return whether the move is possible. */
-char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
+char check_move(const ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves) {
   if (!in_bounds(rank, file))
     return 0;
@@ -571,8 +575,8 @@ char check_move(ColoredPiece *board, int src_square, CaptureMode capture,
   return 1;
 }
 
-char can_castle(ColoredPiece *board, char row_offset, Bitboard opponent_moves,
-                CastleSide side) {
+char can_castle(const ColoredPiece *board, char row_offset,
+                Bitboard opponent_moves, CastleSide side) {
   char sq;
   switch (side) {
   case CASTLE_QUEENSIDE:

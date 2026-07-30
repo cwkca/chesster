@@ -62,27 +62,31 @@ ColoredPiece get_piece_named(char piece);
 
 int load_fen(const char *fen);
 
-void find_all_pieces(ColoredPiece *board, PieceColor color, ByteSet *squares);
-void find_pieces(ColoredPiece *board, ColoredPiece piece, ByteSet *squares);
-void find_file_pawns(ColoredPiece *board, PieceColor color, char file,
+void find_all_pieces(const ColoredPiece *board, PieceColor color,
+                     ByteSet *squares);
+void find_pieces(const ColoredPiece *board, ColoredPiece piece,
+                 ByteSet *squares);
+void find_file_pawns(const ColoredPiece *board, PieceColor color, char file,
                      ByteSet *squares);
 
 char in_bounds(char rank, char file);
-void get_moves(ColoredPiece *board, char square, char for_control,
+void get_moves(const ColoredPiece *board, char square, char for_control,
                Bitboard moves);
-void get_moves_from(ColoredPiece *board, ByteSet *src_squares, Vector *moves);
-void get_all_moves(ColoredPiece *board, PieceColor color, char for_control,
-                   Bitboard moves);
+void get_moves_from(const ColoredPiece *board, ByteSet *src_squares,
+                    Vector *moves);
+void get_all_moves(const ColoredPiece *board, PieceColor color,
+                   char for_control, Bitboard moves);
+void get_legal_moves(ColoredPiece *board, PieceColor color, Vector *moves);
 void do_move(ColoredPiece *board, Move *move, Piece promote, char testing);
 void undo_move(ColoredPiece *board, Move *move, ColoredPiece captured);
 
-void get_castles(ColoredPiece *board, PieceColor color, Vector *moves);
-void parse_castle(Move *move, Castle *castle);
+void get_castles(const ColoredPiece *board, PieceColor color, Vector *moves);
+void parse_castle(const Move *move, Castle *castle);
 void update_castling_rights(char start_square, ColoredPiece *rights);
 #define is_castle(move) ((move)->src_square & SPECIAL_MOVE)
 
-char find_king(ColoredPiece *board, PieceColor color);
-char king_in_check(ColoredPiece *board, PieceColor color);
+char find_king(const ColoredPiece *board, PieceColor color);
+char king_in_check(const ColoredPiece *board, PieceColor color);
 void filter_check(ColoredPiece *board, PieceColor color, Vector *moves);
 void calc_stats(ColoredPiece *board, PieceColor color, PlayerStats *stats);
 Move *choose_move(ColoredPiece *board, PieceColor color, char search_depth);

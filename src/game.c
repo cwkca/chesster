@@ -57,10 +57,10 @@ int init_game() {
     return 1;
 
   init_chess(MAX_SEARCH_DEPTH + 1);
-  init_set(&src_squares, 16);
-  init_vector(&moves, sizeof(Move), MOVE_VECTOR_SIZE);
-  init_vector(&new_moves, sizeof(Move), MOVE_VECTOR_SIZE);
-  init_vector(&boards, BOARD_BYTES, 50);
+  set_init(&src_squares, 16);
+  vector_init(&moves, sizeof(Move), MOVE_VECTOR_SIZE);
+  vector_init(&new_moves, sizeof(Move), MOVE_VECTOR_SIZE);
+  vector_init(&boards, BOARD_BYTES, 50);
 
   char *depth_str = getenv("CHESSTER_DEPTH");
   if (depth_str) {
@@ -75,7 +75,7 @@ int init_game() {
 }
 
 int start_game() {
-  clear_vector(&boards);
+  vector_clear(&boards);
   move = 0;
 
   assert(load_fen(STARTING_FEN) == 0);
@@ -96,10 +96,10 @@ void handle_key(SDL_Keysym keysym) {
 void cleanup_game() {
   cleanup_chess();
 
-  cleanup_set(&src_squares);
-  cleanup_vector(&moves);
-  cleanup_vector(&new_moves);
-  cleanup_vector(&boards);
+  set_cleanup(&src_squares);
+  vector_cleanup(&moves);
+  vector_cleanup(&new_moves);
+  vector_cleanup(&boards);
 
   if (draw)
     draw->cleanup();
@@ -112,8 +112,8 @@ void cleanup_game() {
 void select_piece(SDL_Keycode key) {
   char i;
   char is_piece = strchr(PIECE_NAMES, (char)key) != NULL;
-  clear_set(&src_squares);
-  clear_vector(&moves);
+  set_clear(&src_squares);
+  vector_clear(&moves);
 
   assert(key_handler == select_piece);
   move_end = move_str;
@@ -146,7 +146,7 @@ void select_piece(SDL_Keycode key) {
 
   get_moves_from(board, &src_squares, &moves);
   filter_check(board, P_WHITE, &moves);
-  clear_set(&src_squares);
+  set_clear(&src_squares);
 
   if (moves.size > 0) {
     show_moves();
@@ -186,7 +186,7 @@ void select_move(SDL_Keycode key) {
     }
   }
 
-  clear_vector(&new_moves);
+  vector_clear(&new_moves);
 
   if (move_end - move_str < MOVE_LEN && is_move_char(key))
     *(move_end++) = key;
@@ -209,12 +209,12 @@ void select_move(SDL_Keycode key) {
     filter_castle =
         strspn(move_str, "o") > 2 ? CASTLE_QUEENSIDE : CASTLE_KINGSIDE;
 
-    clear_vector(&moves);
+    vector_clear(&moves);
     get_castles(board, P_WHITE, &moves);
     filter_moves(by_castle);
   }
 
-  swap_vectors(&moves, &new_moves);
+  vector_swap(&moves, &new_moves);
 
   if (!moves.size)
     key_handler = select_piece;
