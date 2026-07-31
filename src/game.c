@@ -168,7 +168,7 @@ void select_move(SDL_Keycode key) {
       complete = !move_black();
       update_stats();
 
-      boards.size = ++move;
+      vector_resize(&boards, ++move);
       vector_append(&boards, board);
 
       if (complete) {

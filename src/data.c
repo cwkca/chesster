@@ -22,11 +22,11 @@ char board_empty(const Bitboard board) {
   return 1;
 }
 
-char has_square(Bitboard board, char square) {
+char has_square(const Bitboard board, char square) {
   return board[square_rank(square)] & (1 << square_file(square));
 }
 
-void add_board_to_vector(char src_square, Bitboard move_board,
+void add_board_to_vector(char src_square, const Bitboard move_board,
                          Vector *move_vector) {
   char rank, square, mask;
   Move move;
@@ -63,7 +63,7 @@ void vector_init(Vector *v, int elt_size, int capacity) {
   v->capacity = capacity;
 }
 
-void *vector_get(Vector *v, int i) {
+void *vector_get(const Vector *v, int i) {
   if (i < 0 || i >= v->size) {
     printf("Vector index %d out of bounds (size %d)\n", i, v->size);
     exit(1);
@@ -72,25 +72,32 @@ void *vector_get(Vector *v, int i) {
   return v->data + (i * v->elt_size);
 }
 
-void vector_append(Vector *v, void *elt) {
-  int last;
-  assert(v->size <= v->capacity);
+void vector_resize(Vector *v, int size) {
+  assert(size >= 0);
+  v->size = size;
+  if (size <= v->capacity)
+    return;
 
-  if (v->size == v->capacity) {
-    int memsize = v->size * v->capacity << 1;
-    v->data = realloc(v->data, memsize);
-    if (!v->data) {
-      printf("Unable to allocate %d bytes of memory\n", memsize);
-      exit(1);
-    }
-
+  while (size > v->capacity)
     v->capacity <<= 1;
-    printf("Doubling vector capacity to %d\n", v->capacity);
-  }
 
-  last = v->size++;
+  int memsize = v->elt_size * v->capacity;
+  v->data = realloc(v->data, memsize);
+  if (v->data)
+    printf("Increasing vector capacity to %d\n", v->capacity);
+  else {
+    printf("Unable to allocate %d bytes of memory\n", memsize);
+    exit(1);
+  }
+}
+
+void vector_append(Vector *v, void *elt) {
+  int last = v->size++;
+  vector_resize(v, v->size);
   memcpy(vector_get(v, last), elt, v->elt_size);
 }
+
+void vector_zero(Vector *v) { memset(v->data, 0, v->elt_size * v->size); }
 
 void vector_swap(Vector *a, Vector *b) {
   Vector temp = *a;
@@ -98,7 +105,7 @@ void vector_swap(Vector *a, Vector *b) {
   *b = temp;
 }
 
-void *vector_random_elt(Vector *v) {
+void *vector_random_elt(const Vector *v) {
   return v->size ? vector_get(v, rand() % v->size) : NULL;
 }
 
@@ -150,7 +157,7 @@ void set_add(ByteSet *set, char elt) {
   set->bytes[set->size++] = elt;
 }
 
-char set_contains(ByteSet *set, char elt) {
+char set_contains(const ByteSet *set, char elt) {
   int i;
   for (i = 0; i < set->size; i++)
     if (set->bytes[i] == elt)

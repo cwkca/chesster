@@ -8,11 +8,11 @@
 #include <signal.h>
 #include <unistd.h>
 
-const int HANDLED_SIGNALS[] = {SIGQUIT, SIGILL,  SIGABRT, SIGFPE,
-                               SIGSEGV, SIGTERM, 0};
+const int HANDLED_SIGNALS[] = {SIGQUIT, SIGILL,  SIGABRT, SIGBUS,
+                               SIGFPE,  SIGSEGV, SIGTERM, 0};
 
 #define MAX_STACK_DEPTH 20
-#define SKIP_FRAMES 3
+#define SKIP_FRAMES 2
 
 void handle_signal(int sig);
 

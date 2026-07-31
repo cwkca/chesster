@@ -25,23 +25,25 @@ typedef struct {
 
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
-char has_square(Bitboard board, char square);
-void add_board_to_vector(char src_square, Bitboard move_board,
+char has_square(const Bitboard board, char square);
+void add_board_to_vector(char src_square, const Bitboard move_board,
                          Vector *move_vector);
 void calc_board_overlap(const Bitboard a, const Bitboard b, Bitboard overlap);
 
 void vector_init(Vector *vector, int elt_size, int capacity);
-void *vector_get(Vector *vector, int index);
+void *vector_get(const Vector *vector, int index);
+void vector_resize(Vector *vector, int size);
 void vector_append(Vector *vector, void *elt);
+void vector_zero(Vector *vector);
 void vector_swap(Vector *a, Vector *b);
-void *vector_random_elt(Vector *v);
+void *vector_random_elt(const Vector *v);
 void vector_cleanup(Vector *v);
 #define vector_clear(v) ((v)->size = 0)
 #define vector_empty(v) ((v)->size == 0)
 
 void set_init(ByteSet *set, char capacity);
 void set_add(ByteSet *set, char elt);
-char set_contains(ByteSet *set, char elt);
+char set_contains(const ByteSet *set, char elt);
 void set_cleanup(ByteSet *set);
 #define set_clear(s) ((s)->size = 0)
 

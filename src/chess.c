@@ -63,7 +63,7 @@ void init_chess(char search_depth) {
 
   set_init(&squares, 16);
   vector_init(&move_searches, sizeof(Vector), search_depth + 1);
-  move_searches.size = search_depth + 1;
+  vector_resize(&move_searches, search_depth + 1);
   for (vec = 0; vec < search_depth + 1; vec++)
     vector_init(vector_get(&move_searches, vec), sizeof(Move),
                 MOVE_VECTOR_SIZE);
