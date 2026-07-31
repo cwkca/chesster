@@ -23,6 +23,11 @@ typedef struct {
   int size, capacity;
 } ByteSet;
 
+typedef struct {
+  int size, slot_mask, key_size, val_size;
+  Vector keys, values;
+} HashMap;
+
 void clear_board(Bitboard board);
 char board_empty(const Bitboard board);
 char has_square(const Bitboard board, char square);
@@ -46,5 +51,11 @@ void set_add(ByteSet *set, char elt);
 char set_contains(const ByteSet *set, char elt);
 void set_cleanup(ByteSet *set);
 #define set_clear(s) ((s)->size = 0)
+
+void map_init(HashMap *map, int key_size, int value_size, int capacity);
+int map_put(HashMap *map, const void *key, const void *value);
+void *map_get(const HashMap *map, const void *key);
+void map_clear(HashMap *map);
+void map_cleanup(HashMap *map);
 
 #endif // DATA_H

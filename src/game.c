@@ -9,7 +9,7 @@
 #include "draw.h"
 #include "game.h"
 
-const struct timespec move_delay = {0, 2e8};
+// const struct timespec move_delay = {0, 2e8};
 DrawAdapter *draw = NULL;
 ColoredPiece board[65];
 const int BOARD_BYTES = sizeof(board);
@@ -165,6 +165,7 @@ void select_move(SDL_Keycode key) {
       start_game();
     else if (moves.size == 1) {
       do_move(board, vector_get(&moves, 0), QUEEN, 0);
+      update_stats();
       complete = !move_black();
       update_stats();
 
@@ -327,7 +328,7 @@ char move_black() {
 
   clear_board_highlights();
   draw->draw_board();
-  nanosleep(&move_delay, NULL);
+  // nanosleep(&move_delay, NULL);
 
   m = choose_move(board, P_BLACK, search_depth);
   if (m)

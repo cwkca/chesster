@@ -37,6 +37,11 @@ typedef enum {
 
 ByteSet squares;
 Vector move_searches, temp_moves;
+HashMap move_boards;
+
+#define INITIAL_CACHE_SIZE 1000
+#define CONDENSED_BOARD_SIZE 33
+char condensed_board[CONDENSED_BOARD_SIZE];
 
 /* Private function prototypes */
 int safe_get_lut_index(char piece);
@@ -48,6 +53,7 @@ char check_move(const ColoredPiece *board, int src_square, CaptureMode capture,
                 int rank, int file, Bitboard moves);
 char can_castle(const ColoredPiece *board, char row_offset,
                 Bitboard opponent_moves, CastleSide side);
+char *condense_board(const ColoredPiece *board, char extra_nibble);
 
 void init_chess(char search_depth) {
   int lut_index, piece_index, vec;
@@ -69,6 +75,8 @@ void init_chess(char search_depth) {
                 MOVE_VECTOR_SIZE);
 
   vector_init(&temp_moves, sizeof(Move), MOVE_VECTOR_SIZE);
+  map_init(&move_boards, CONDENSED_BOARD_SIZE, sizeof(Bitboard),
+           INITIAL_CACHE_SIZE);
 }
 
 void cleanup_chess() {
@@ -81,6 +89,7 @@ void cleanup_chess() {
   vector_cleanup(&move_searches);
 
   vector_cleanup(&temp_moves);
+  map_cleanup(&move_boards);
 }
 
 char is_color(ColoredPiece piece, PieceColor color) {
@@ -249,13 +258,28 @@ void get_moves_from(const ColoredPiece *board, ByteSet *squares,
   }
 }
 
+long queries = 0, hits = 0, skips = 0;
+
 void get_all_moves(const ColoredPiece *board, PieceColor color,
                    char for_control, Bitboard moves) {
   char sq;
+  const char *condensed = condense_board(board, color | for_control);
+
+  /* if (!(queries++ & 0xFFFFF))
+    printf("%ld queries with %.1f%% hit rate, %.1f average skips\n", queries,
+           100. * hits / queries, (double)skips / queries); */
+  void *cached = map_get(&move_boards, condensed);
+  if (cached) {
+    hits++;
+    memcpy(moves, cached, sizeof(Bitboard));
+    return;
+  }
+
   clear_board(moves);
   for (sq = 0; sq < 64; sq++)
     if (is_color(board[sq], color))
       get_moves(board, sq, for_control, moves);
+  skips += map_put(&move_boards, condensed, moves);
 }
 
 void get_legal_moves(ColoredPiece *board, PieceColor color, Vector *moves) {
@@ -630,4 +654,14 @@ char can_castle(const ColoredPiece *board, char row_offset,
   default:
     throw("Invalid castle side");
   }
+}
+
+char *condense_board(const ColoredPiece *board, char extra_nibble) {
+  int i;
+  char *byte = condensed_board;
+  for (i = 0; i < 64; i += 2)
+    *byte++ = board[i] | (board[i + 1] << 4);
+
+  *byte = board[i] | (extra_nibble << 4);
+  return condensed_board;
 }

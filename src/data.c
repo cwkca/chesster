@@ -1,10 +1,13 @@
 /* Data structures. */
 
-#include "data.h"
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "data.h"
+#include "debug.h"
 
 const Bitboard FULL_BOARD = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
@@ -54,20 +57,16 @@ void vector_init(Vector *v, int elt_size, int capacity) {
   v->elt_size = elt_size;
   int memsize = capacity * elt_size;
   v->data = malloc(memsize);
-  if (!v->data) {
-    printf("Unable to allocate %d bytes of memory\n", memsize);
-    exit(1);
-  }
+  if (!v->data)
+    throw("Unable to allocate memory");
 
   v->size = 0;
   v->capacity = capacity;
 }
 
 void *vector_get(const Vector *v, int i) {
-  if (i < 0 || i >= v->size) {
-    printf("Vector index %d out of bounds (size %d)\n", i, v->size);
-    exit(1);
-  }
+  if (i < 0 || i >= v->size)
+    throw("Vector index out of bounds");
 
   return v->data + (i * v->elt_size);
 }
@@ -85,10 +84,8 @@ void vector_resize(Vector *v, int size) {
   v->data = realloc(v->data, memsize);
   if (v->data)
     printf("Increasing vector capacity to %d\n", v->capacity);
-  else {
-    printf("Unable to allocate %d bytes of memory\n", memsize);
-    exit(1);
-  }
+  else
+    throw("Unable to allocate memory");
 }
 
 void vector_append(Vector *v, void *elt) {
@@ -125,10 +122,8 @@ void set_init(ByteSet *set, char capacity) {
   assert(capacity > 0);
 
   set->bytes = malloc(capacity);
-  if (!set->bytes) {
-    printf("Unable to allocate %d bytes of memory\n", capacity);
-    exit(1);
-  }
+  if (!set->bytes)
+    throw("Unable to allocate memory");
 
   set->size = 0;
   set->capacity = capacity;
@@ -171,4 +166,142 @@ void set_cleanup(ByteSet *set) {
     set->bytes = NULL;
     set->size = set->capacity = 0;
   }
+}
+
+/*
+ * Maps
+ */
+
+#define HASH_BYTES 4
+#define LOAD_MAGN 1
+#define MAP_MAX 2e6
+typedef uint32_t dword;
+
+void init_slots(Vector *vec, int slot_size, int count) {
+  vector_init(vec, slot_size, count);
+  vector_resize(vec, count);
+  vector_zero(vec);
+}
+
+dword rotate_left(const dword *val, int bits) {
+  return (*val << bits) | (*val >> (32 - bits));
+}
+
+dword calc_hash(const void *val, int bytes) {
+  int bit, byte;
+  const char *data = val;
+  dword hash;
+  const void *end = val + bytes;
+
+  if (bytes < HASH_BYTES) {
+    for (hash = byte = 0; byte < bytes; byte++) {
+      hash |= *data++;
+      hash <<= 8;
+    }
+    return hash;
+  }
+
+  hash = 0x811C9DC5;
+  for (end = val + bytes - 4; val < end; val += 4) {
+    hash ^= *((dword *)val);
+    hash *= 0x01000193;
+  }
+  hash ^= *((dword *)(end - 4));
+
+  /* Zero byte marks empty spots, so hashes cannot start with that. */
+  if (!(hash & 0xFF))
+    hash++;
+
+  return hash;
+}
+
+int slot_insert(HashMap *map, dword hash, const void *key, const void *value) {
+  void *entry;
+  int slot = hash & map->slot_mask;
+
+  /* Advance to the first empty slot */
+  int skips = 0;
+  for (entry = vector_get(&map->keys, slot); *((const char *)entry);
+       entry = vector_get(&map->keys, ++slot), skips++)
+    if (slot == map->keys.size - 1)
+      slot = -1;
+
+  memcpy(entry, &hash, HASH_BYTES);
+  memcpy(entry + HASH_BYTES, key, map->key_size);
+  memcpy(vector_get(&map->values, slot), value, map->val_size);
+  return skips;
+}
+
+void map_expand(HashMap *map) {
+  const void *entry;
+  Vector old_keys = map->keys, old_values = map->values;
+
+  int slot, new_size = map->keys.size << 1;
+  // printf("Expanding map to %d slots\n", new_size);
+  init_slots(&map->keys, HASH_BYTES + map->key_size, new_size);
+  init_slots(&map->values, map->val_size, new_size);
+  map->slot_mask <<= 1;
+  map->slot_mask |= 1;
+
+  for (slot = 0; slot < old_keys.size; slot++) {
+    entry = vector_get(&map->keys, slot);
+    if (*((const char *)entry))
+      slot_insert(map, *((dword *)entry), entry + HASH_BYTES,
+                  vector_get(&old_values, slot));
+  }
+
+  vector_cleanup(&old_keys);
+  vector_cleanup(&old_values);
+}
+
+void map_init(HashMap *map, int key_size, int val_size, int capacity) {
+  int table_size;
+  for (table_size = 1; table_size < capacity; table_size <<= 1)
+    ;
+  init_slots(&map->keys, HASH_BYTES + key_size, table_size);
+  init_slots(&map->values, val_size, table_size);
+
+  map->slot_mask = table_size - 1;
+  map->key_size = key_size;
+  map->val_size = val_size;
+  map->size = 0;
+}
+
+int map_put(HashMap *map, const void *key, const void *value) {
+  int hash, slot, max_load = map->keys.size - (map->keys.size >> LOAD_MAGN);
+  void *entry;
+
+  if (++map->size > MAP_MAX) {
+    // printf("Emptying move cache\n");
+    map_clear(map);
+  } else if (map->size > max_load)
+    map_expand(map);
+
+  return slot_insert(map, calc_hash(key, map->key_size), key, value);
+}
+
+void *map_get(const HashMap *map, const void *key) {
+  int slot = calc_hash(key, map->key_size) & map->slot_mask;
+  const void *entry;
+
+  for (entry = vector_get(&map->keys, slot); *((const char *)entry);
+       entry = vector_get(&map->keys, ++slot)) {
+    if (memcmp(key, entry + HASH_BYTES, map->key_size) == 0)
+      return vector_get(&map->values, slot);
+    else if (slot == map->keys.size - 1)
+      slot = -1;
+  }
+
+  return NULL;
+}
+
+void map_clear(HashMap *map) {
+  map->size = 0;
+  vector_zero(&map->keys);
+}
+
+void map_cleanup(HashMap *map) {
+  map->size = 0;
+  vector_cleanup(&map->keys);
+  vector_cleanup(&map->values);
 }
